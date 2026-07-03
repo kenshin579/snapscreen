@@ -11,7 +11,7 @@ public enum MainMenuBuilder {
         main.addItem(submenu(appMenu, title: "SnapScreen"))
 
         let fileMenu = NSMenu(title: "파일")
-        fileMenu.addItem(withTitle: "저장…", action: Selector(("saveDocument:")), keyEquivalent: "s")
+        fileMenu.addItem(withTitle: "저장…", action: Selector(("saveImage:")), keyEquivalent: "s")
         fileMenu.addItem(withTitle: "닫기", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         main.addItem(submenu(fileMenu, title: "파일"))
 
