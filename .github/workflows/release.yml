@@ -1,0 +1,16 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: Scripts/bundle.sh release
+      - run: /usr/bin/ditto -c -k --keepParent build/SnapScreen.app "SnapScreen-${GITHUB_REF_NAME}.zip"
+      - run: gh release create "$GITHUB_REF_NAME" "SnapScreen-${GITHUB_REF_NAME}.zip" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
