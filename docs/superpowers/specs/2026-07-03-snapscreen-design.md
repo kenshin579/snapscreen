@@ -43,7 +43,8 @@ macOS용 오픈소스 스크린샷 캡처 + 주석 편집 앱. 유료 앱(CleanS
 **사용자 흐름**
 
 ```
-전역 단축키 (기본: cmd+shift+1 영역 / cmd+shift+2 창 / cmd+shift+3 전체)
+전역 단축키 (기본: cmd+shift+1 영역 / cmd+shift+2 창 / cmd+shift+0 전체)
+  ※ cmd+shift+3/4/5/6은 macOS 시스템 스크린샷 단축키와 충돌하므로 기본값에서 제외
   → 영역 선택 / 창 선택 / 전체 캡처
   → 주석 편집기 창이 바로 열림 (Shottr 방식)
   → 편집 후 cmd+C 클립보드 복사 또는 cmd+S 파일 저장
