@@ -37,9 +37,11 @@ public enum AnnotationKind: Equatable {
         case .rectangle(let r), .ellipse(let r), .pixelate(let r):
             return r
         case .text(let o, let s, let f):
-            // AppKit 없이 근사: 글자폭 0.6em, 높이 1.3em
-            return CGRect(x: o.x, y: o.y,
-                          width: CGFloat(s.count) * f * 0.6, height: f * 1.3)
+            // AppKit 없이 근사: 라틴 0.6em, CJK 1.0em. 높이 1.3em
+            let width = s.reduce(CGFloat(0)) { acc, ch in
+                acc + (ch.isASCII ? f * 0.6 : f * 1.0)
+            }
+            return CGRect(x: o.x, y: o.y, width: width, height: f * 1.3)
         case .stepBadge(let c, _, let r):
             return CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)
         }

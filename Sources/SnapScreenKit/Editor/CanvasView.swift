@@ -8,6 +8,21 @@ public final class CanvasView: NSView {
     let state: EditorState
     var selectedID: UUID?
 
+    private enum DragMode {
+        case none
+        case drawing(start: CGPoint)
+        case moving(id: UUID, last: CGPoint, total: CGVector)
+    }
+    private var dragMode: DragMode = .none
+    private var draft: Annotation?
+    private var textField: NSTextField?
+    private var pendingTextOrigin: CGPoint?
+
+    /// 캡처 배율 기준 기본 크기 (Retina에서 주석이 너무 얇아지지 않게)
+    private var defaultLineWidth: CGFloat { 3 * captureScale }
+    private var defaultFontSize: CGFloat { 16 * captureScale }
+    private var badgeRadius: CGFloat { 14 * captureScale }
+
     /// 뷰 포인트 → 이미지 픽셀 배율
     var fitScale: CGFloat {
         bounds.width / CGFloat(image.width)
@@ -36,12 +51,177 @@ public final class CanvasView: NSView {
         ctx.scaleBy(x: fitScale, y: fitScale)
         ctx.interpolationQuality = .high
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
-        AnnotationRenderer.draw(store.annotations, in: ctx, baseImage: image, scale: captureScale)
-        drawOverlays(in: ctx) // Task 14에서 드래프트/선택 표시 확장
+        for annotation in store.annotations {
+            if case .moving(let id, _, let total) = dragMode, annotation.id == id {
+                var moved = annotation
+                moved.kind = annotation.kind.translated(by: total)
+                AnnotationRenderer.draw(moved, in: ctx, baseImage: image, scale: captureScale)
+            } else {
+                AnnotationRenderer.draw(annotation, in: ctx, baseImage: image, scale: captureScale)
+            }
+        }
+        drawOverlays(in: ctx)
         ctx.restoreGState()
     }
 
     func drawOverlays(in ctx: CGContext) {
-        // Task 14에서 구현
+        if let draft {
+            AnnotationRenderer.draw(draft, in: ctx, baseImage: image, scale: captureScale)
+        }
+        if let selectedID,
+           let selected = store.annotations.first(where: { $0.id == selectedID }) {
+            var bounds = selected.kind.bounds
+            if case .moving(let id, _, let total) = dragMode, id == selectedID {
+                bounds = bounds.offsetBy(dx: total.dx, dy: total.dy)
+            }
+            ctx.setStrokeColor(NSColor.controlAccentColor.cgColor)
+            ctx.setLineWidth(1.5 * captureScale)
+            ctx.setLineDash(phase: 0, lengths: [4 * captureScale, 4 * captureScale])
+            ctx.stroke(bounds.insetBy(dx: -6 * captureScale, dy: -6 * captureScale))
+            ctx.setLineDash(phase: 0, lengths: [])
+        }
+    }
+
+    // MARK: - Mouse
+
+    public override func mouseDown(with event: NSEvent) {
+        commitTextFieldIfNeeded()
+        let p = imagePoint(from: event)
+
+        if let hit = AnnotationHitTester.hitTest(p, annotations: store.annotations,
+                                                 tolerance: 8 * captureScale) {
+            selectedID = hit.id
+            dragMode = .moving(id: hit.id, last: p, total: .zero)
+            needsDisplay = true
+            return
+        }
+        selectedID = nil
+
+        switch state.tool {
+        case .text:
+            beginTextInput(at: p, viewPoint: convert(event.locationInWindow, from: nil))
+        case .stepBadge:
+            store.add(Annotation(kind: .stepBadge(center: p, number: store.nextStepNumber,
+                                                  radius: badgeRadius),
+                                 color: state.color, lineWidth: defaultLineWidth))
+            needsDisplay = true
+        default:
+            dragMode = .drawing(start: p)
+        }
+        needsDisplay = true
+    }
+
+    public override func mouseDragged(with event: NSEvent) {
+        let p = imagePoint(from: event)
+        switch dragMode {
+        case .drawing(let start):
+            draft = makeDraft(from: start, to: p)
+            needsDisplay = true
+        case .moving(let id, let last, let total):
+            let delta = CGVector(dx: p.x - last.x, dy: p.y - last.y)
+            dragMode = .moving(id: id, last: p,
+                               total: CGVector(dx: total.dx + delta.dx, dy: total.dy + delta.dy))
+            needsDisplay = true
+        case .none:
+            break
+        }
+    }
+
+    public override func mouseUp(with event: NSEvent) {
+        switch dragMode {
+        case .drawing:
+            if let draft, draft.kind.bounds.width >= 3 || draft.kind.bounds.height >= 3 {
+                store.add(draft)
+            }
+            draft = nil
+        case .moving(let id, _, let total):
+            if total.dx != 0 || total.dy != 0 {
+                store.translate(id: id, by: total) // undo 1회로 커밋
+            }
+        case .none:
+            break
+        }
+        dragMode = .none
+        needsDisplay = true
+    }
+
+    private func makeDraft(from start: CGPoint, to p: CGPoint) -> Annotation {
+        let rect = CGRect(x: min(start.x, p.x), y: min(start.y, p.y),
+                          width: abs(start.x - p.x), height: abs(start.y - p.y))
+        let kind: AnnotationKind
+        switch state.tool {
+        case .arrow: kind = .arrow(start: start, end: p)
+        case .rectangle: kind = .rectangle(rect)
+        case .ellipse: kind = .ellipse(rect)
+        case .pixelate: kind = .pixelate(rect)
+        case .text, .stepBadge: kind = .rectangle(rect) // 도달하지 않음 (mouseDown에서 처리)
+        }
+        return Annotation(kind: kind, color: state.color, lineWidth: defaultLineWidth)
+    }
+
+    // MARK: - Keyboard
+
+    public override func keyDown(with event: NSEvent) {
+        switch event.keyCode {
+        case 51, 117: // delete, forward delete
+            if let selectedID {
+                store.remove(id: selectedID)
+                self.selectedID = nil
+                needsDisplay = true
+            }
+        case 53: // esc
+            selectedID = nil
+            needsDisplay = true
+        default:
+            guard let char = event.charactersIgnoringModifiers?.lowercased() else {
+                return super.keyDown(with: event)
+            }
+            let mapping: [String: EditorTool] = [
+                "a": .arrow, "r": .rectangle, "o": .ellipse,
+                "t": .text, "b": .pixelate, "n": .stepBadge
+            ]
+            if let tool = mapping[char] {
+                state.tool = tool
+            } else {
+                super.keyDown(with: event)
+            }
+        }
+    }
+
+    // MARK: - Text input
+
+    private func beginTextInput(at imageOrigin: CGPoint, viewPoint: CGPoint) {
+        let field = NSTextField(frame: CGRect(x: viewPoint.x, y: viewPoint.y - 22,
+                                              width: 220, height: 24))
+        field.font = .boldSystemFont(ofSize: 16)
+        field.textColor = state.color.nsColor
+        field.backgroundColor = NSColor(white: 1, alpha: 0.85)
+        field.isBordered = true
+        field.focusRingType = .none
+        field.target = self
+        field.action = #selector(textFieldCommitted(_:))
+        addSubview(field)
+        window?.makeFirstResponder(field)
+        textField = field
+        pendingTextOrigin = imageOrigin
+    }
+
+    @objc private func textFieldCommitted(_ sender: NSTextField) {
+        commitTextFieldIfNeeded()
+    }
+
+    private func commitTextFieldIfNeeded() {
+        guard let field = textField, let origin = pendingTextOrigin else { return }
+        let string = field.stringValue.trimmingCharacters(in: .whitespaces)
+        field.removeFromSuperview()
+        textField = nil
+        pendingTextOrigin = nil
+        if !string.isEmpty {
+            store.add(Annotation(kind: .text(origin: origin, string: string,
+                                             fontSize: defaultFontSize),
+                                 color: state.color, lineWidth: defaultLineWidth))
+        }
+        window?.makeFirstResponder(self)
+        needsDisplay = true
     }
 }
