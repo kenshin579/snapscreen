@@ -35,19 +35,22 @@ public final class CaptureEngine {
         try await capture(displayID: displayID, sourceRect: rect, scale: scale)
     }
 
-    public func captureWindow(_ window: SCWindow, scale: CGFloat) async throws -> CaptureResult {
+    public func captureWindow(_ window: SCWindow) async throws -> CaptureResult {
         let filter = SCContentFilter(desktopIndependentWindow: window)
-        let config = configuration(size: window.frame.size, scale: scale)
+        let scale = CGFloat(filter.pointPixelScale)
+        let config = configuration(size: filter.contentRect.size, scale: scale)
         let image = try await SCScreenshotManager.captureImage(contentFilter: filter,
                                                                configuration: config)
         return CaptureResult(image: image, scale: scale)
     }
 
-    /// 창 선택 UI용 창 목록 (일반 레이어의 화면 표시 중인 창만)
+    /// 창 선택 UI용 창 목록 (일반 레이어의 화면 표시 중인 창만, 우리 앱 창 제외)
     public func shareableWindows() async throws -> [SCWindow] {
         let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
+        let ourPID = pid_t(ProcessInfo.processInfo.processIdentifier)
         return content.windows.filter {
             $0.isOnScreen && $0.windowLayer == 0
+                && $0.owningApplication?.processID != ourPID
                 && $0.frame.width >= 40 && $0.frame.height >= 40
         }
     }
