@@ -10,6 +10,7 @@ public final class CaptureCoordinator {
     public let settings = SettingsStore()
     private var overlay: SelectionOverlayController?
     private var windowPicker: WindowPickerController?
+    private var isPickingWindow = false
 
     public init() {
         settings.load()
@@ -52,7 +53,8 @@ public final class CaptureCoordinator {
                 }
             }
         case .window:
-            guard windowPicker == nil else { return }
+            guard !isPickingWindow else { return }
+            isPickingWindow = true
             Task {
                 do {
                     let windows = try await self.engine.shareableWindows()
@@ -61,6 +63,7 @@ public final class CaptureCoordinator {
                     picker.begin(windows: windows) { [weak self] target in
                         guard let self else { return }
                         self.windowPicker = nil
+                        self.isPickingWindow = false
                         guard let target else { return }
                         Task {
                             do {
@@ -72,6 +75,7 @@ public final class CaptureCoordinator {
                         }
                     }
                 } catch {
+                    self.isPickingWindow = false
                     Notifier.alertFailure(title: "캡처 실패", body: error.localizedDescription)
                 }
             }

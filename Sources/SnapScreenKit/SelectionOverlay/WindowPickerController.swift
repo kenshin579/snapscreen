@@ -17,6 +17,7 @@ public final class WindowPickerController {
     /// windows: CaptureEngine.shareableWindows() 결과 (앞쪽 창이 배열 앞)
     public func begin(windows: [SCWindow], completion: @escaping (PickTarget?) -> Void) {
         self.completion = completion
+        // 주의: hover 최전면 판정은 SCShareableContent.windows의 front-to-back 순서에 의존한다.
         // CG 전역 좌표(주 화면 좌상단 원점) → Cocoa 전역 좌표
         let primaryHeight = NSScreen.screens.first?.frame.maxY ?? 0
         targets = windows.map { w in
