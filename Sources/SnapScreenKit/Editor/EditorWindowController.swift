@@ -91,7 +91,10 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     @objc public func saveImage(_ sender: Any?) {
         guard let image = flattened() else { return }
         switch FileSaver(settings: settings).save(image, scale: result.scale) {
-        case .saved, .savedToFallback:
+        case .saved:
+            window?.close()
+        case .savedToFallback(let url):
+            Notifier.show(title: "저장 위치 폴백", body: "데스크탑에 저장했습니다: \(url.lastPathComponent)")
             window?.close()
         case .failed(let error):
             Notifier.alertFailure(title: "저장 실패", body: error.localizedDescription)

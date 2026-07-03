@@ -84,6 +84,8 @@ public final class CaptureCoordinator {
     }
 
     func handleCaptured(_ result: CaptureResult) {
+        // controller가 onClose 클로저를 통해 자신을 보유하는 순환은
+        // windowWillClose에서 onClose = nil로 끊긴다
         var controller: EditorWindowController?
         controller = EditorWindowController(result: result, settings: settings) { [weak self] in
             self?.editors.removeAll { $0 === controller }
