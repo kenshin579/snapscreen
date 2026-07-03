@@ -23,8 +23,10 @@ public final class SelectionOverlayController {
         }
         NSApp.activate(ignoringOtherApps: true)
         let mouse = NSEvent.mouseLocation
-        (panels.first { NSMouseInRect(mouse, $0.overlayScreen.frame, false) } ?? panels.first)?
-            .makeKey()
+        if let keyPanel = panels.first(where: { NSMouseInRect(mouse, $0.overlayScreen.frame, false) }) ?? panels.first {
+            keyPanel.makeKey()
+            keyPanel.makeFirstResponder(keyPanel.contentView)
+        }
     }
 
     private func finish(with selection: Selection?) {
@@ -38,8 +40,10 @@ public final class SelectionOverlayController {
 
 private final class OverlayPanel: NSPanel {
     let overlayScreen: NSScreen
+    private let onFinish: (SelectionOverlayController.Selection?) -> Void
 
     init(screen: NSScreen, onFinish: @escaping (SelectionOverlayController.Selection?) -> Void) {
+        self.onFinish = onFinish
         overlayScreen = screen
         super.init(contentRect: screen.frame,
                    styleMask: [.borderless, .nonactivatingPanel],
@@ -49,10 +53,14 @@ private final class OverlayPanel: NSPanel {
         hasShadow = false
         level = .screenSaver
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        isReleasedWhenClosed = false
         contentView = SelectionView(screen: screen, onFinish: onFinish)
     }
 
     override var canBecomeKey: Bool { true }
+
+    /// first responder와 무관하게 패널이 key이면 esc 취소가 보장된다.
+    override func cancelOperation(_ sender: Any?) { onFinish(nil) }
 }
 
 private final class SelectionView: NSView {

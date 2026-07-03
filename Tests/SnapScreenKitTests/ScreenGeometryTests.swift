@@ -18,6 +18,14 @@ final class ScreenGeometryTests: XCTestCase {
         XCTAssertEqual(cg, CGRect(x: 50, y: 800, width: 200, height: 100))
     }
 
+    func testCGRectConversionScreenBelowPrimary() {
+        // 주 화면 아래 보조 화면 (Cocoa 전역 y가 음수)
+        let screen = CGRect(x: 0, y: -900, width: 1440, height: 900)
+        let selection = CGRect(x: 50, y: -900, width: 200, height: 100) // 화면 좌하단
+        let cg = ScreenGeometry.cgRect(fromScreenRect: selection, screenFrame: screen)
+        XCTAssertEqual(cg, CGRect(x: 50, y: 800, width: 200, height: 100))
+    }
+
     func testPixelSize() {
         let px = ScreenGeometry.pixelSize(pointSize: CGSize(width: 100, height: 50), scale: 2)
         XCTAssertEqual(px, CGSize(width: 200, height: 100))
