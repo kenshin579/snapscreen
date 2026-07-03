@@ -1,5 +1,6 @@
 import AppKit
 
+@MainActor
 public enum FlattenRenderer {
     public static func flatten(image: CGImage, annotations: [Annotation]) -> CGImage? {
         guard let ctx = CGContext(data: nil, width: image.width, height: image.height,

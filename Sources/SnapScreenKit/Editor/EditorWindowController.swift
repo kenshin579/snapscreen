@@ -27,6 +27,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
                               backing: .buffered, defer: false)
         window.title = "SnapScreen"
         window.contentAspectRatio = pointSize
+        window.isReleasedWhenClosed = false
         super.init(window: window)
 
         canvas = CanvasView(image: result.image, captureScale: result.scale,

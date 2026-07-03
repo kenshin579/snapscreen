@@ -13,6 +13,7 @@ final class FlattenRendererTests: XCTestCase {
         return ctx.makeImage()!
     }
 
+    @MainActor
     func testFlattenPreservesDimensions() {
         let base = makeImage(width: 200, height: 100)
         let out = FlattenRenderer.flatten(image: base, annotations: [])
@@ -20,6 +21,7 @@ final class FlattenRendererTests: XCTestCase {
         XCTAssertEqual(out?.height, 100)
     }
 
+    @MainActor
     func testFlattenWithAnnotationPreservesDimensions() {
         let base = makeImage(width: 200, height: 100)
         let a = Annotation(kind: .rectangle(CGRect(x: 10, y: 10, width: 50, height: 30)))
