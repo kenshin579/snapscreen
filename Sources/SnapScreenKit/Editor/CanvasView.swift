@@ -1,7 +1,7 @@
 import AppKit
 
 @MainActor
-public final class CanvasView: NSView {
+public final class CanvasView: NSView, NSTextFieldDelegate {
     let image: CGImage
     let captureScale: CGFloat
     let store: AnnotationStore
@@ -173,6 +173,9 @@ public final class CanvasView: NSView {
             selectedID = nil
             needsDisplay = true
         default:
+            guard !event.modifierFlags.contains(.command) else {
+                return super.keyDown(with: event)
+            }
             guard let char = event.charactersIgnoringModifiers?.lowercased() else {
                 return super.keyDown(with: event)
             }
@@ -191,10 +194,15 @@ public final class CanvasView: NSView {
     // MARK: - Text input
 
     private func beginTextInput(at imageOrigin: CGPoint, viewPoint: CGPoint) {
-        let field = NSTextField(frame: CGRect(x: viewPoint.x, y: viewPoint.y - 22,
-                                              width: 220, height: 24))
-        field.font = .boldSystemFont(ofSize: 16)
+        // 커밋된 주석과 동일한 화면 크기: defaultFontSize(이미지 픽셀) × fitScale(이미지→뷰)
+        let displayFontSize = defaultFontSize * fitScale
+        let fieldHeight = displayFontSize * 1.5
+        // 커밋된 텍스트는 origin이 글리프 좌하단 → 필드도 클릭점에서 위로 확장되도록 배치
+        let field = NSTextField(frame: CGRect(x: viewPoint.x, y: viewPoint.y,
+                                              width: max(220, displayFontSize * 14), height: fieldHeight))
+        field.font = .boldSystemFont(ofSize: displayFontSize)
         field.textColor = state.color.nsColor
+        field.delegate = self
         field.backgroundColor = NSColor(white: 1, alpha: 0.85)
         field.isBordered = true
         field.focusRingType = .none
@@ -208,6 +216,19 @@ public final class CanvasView: NSView {
 
     @objc private func textFieldCommitted(_ sender: NSTextField) {
         commitTextFieldIfNeeded()
+    }
+
+    /// esc로 텍스트 입력 취소 (커밋 없이 필드 제거)
+    public func control(_ control: NSControl, textView: NSTextView,
+                        doCommandBy commandSelector: Selector) -> Bool {
+        if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+            textField?.removeFromSuperview()
+            textField = nil
+            pendingTextOrigin = nil
+            window?.makeFirstResponder(self)
+            return true
+        }
+        return false
     }
 
     private func commitTextFieldIfNeeded() {
