@@ -23,9 +23,15 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     private var defaultFontSize: CGFloat { 16 * captureScale }
     private var badgeRadius: CGFloat { 14 * captureScale }
 
-    /// 뷰 포인트 → 이미지 픽셀 배율
+    /// 뷰 포인트 → 이미지 픽셀 배율 (aspect fit)
     var fitScale: CGFloat {
-        bounds.width / CGFloat(image.width)
+        min(bounds.width / CGFloat(image.width), bounds.height / CGFloat(image.height))
+    }
+
+    /// 레터박스 오프셋 (뷰 포인트): 이미지를 캔버스 중앙에 배치
+    var fitOffset: CGPoint {
+        CGPoint(x: (bounds.width - CGFloat(image.width) * fitScale) / 2,
+                y: (bounds.height - CGFloat(image.height) * fitScale) / 2)
     }
 
     public init(image: CGImage, captureScale: CGFloat, store: AnnotationStore, state: EditorState) {
@@ -42,12 +48,16 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
 
     func imagePoint(from event: NSEvent) -> CGPoint {
         let p = convert(event.locationInWindow, from: nil)
-        return CGPoint(x: p.x / fitScale, y: p.y / fitScale)
+        return CGPoint(x: (p.x - fitOffset.x) / fitScale,
+                       y: (p.y - fitOffset.y) / fitScale)
     }
 
     public override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
+        NSColor.windowBackgroundColor.setFill()
+        bounds.fill()
         ctx.saveGState()
+        ctx.translateBy(x: fitOffset.x, y: fitOffset.y)
         ctx.scaleBy(x: fitScale, y: fitScale)
         ctx.interpolationQuality = .high
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
@@ -87,6 +97,9 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     public override func mouseDown(with event: NSEvent) {
         commitTextFieldIfNeeded()
         let p = imagePoint(from: event)
+        // 레터박스(이미지 밖) 클릭은 무시 — flatten 시 유실될 주석 생성 방지
+        guard (0...CGFloat(image.width)).contains(p.x),
+              (0...CGFloat(image.height)).contains(p.y) else { return }
 
         if let hit = AnnotationHitTester.hitTest(p, annotations: store.annotations,
                                                  tolerance: 8 * captureScale) {

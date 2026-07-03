@@ -34,6 +34,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         window.setContentSize(CGSize(width: contentSize.width,
                                      height: contentSize.height + toolbarHeight))
         window.contentAspectRatio = .zero // 툴바 포함이라 비율 고정 해제
+        window.minSize = NSSize(width: 320, height: 44 + 120) // 툴바 압착 방지
 
         canvas = CanvasView(image: result.image, captureScale: result.scale,
                             store: store, state: state)

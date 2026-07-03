@@ -37,7 +37,7 @@ public struct ToolbarView: View {
                         .fill(Color(nsColor: color.nsColor))
                         .frame(width: 18, height: 18)
                         .overlay(Circle().strokeBorder(
-                            state.color == color ? Color.accentColor : Color.gray.opacity(0.4),
+                            state.color == color ? Color.accentColor : Color.primary.opacity(0.3),
                             lineWidth: state.color == color ? 2 : 1))
                         .onTapGesture { state.color = color }
                 }
