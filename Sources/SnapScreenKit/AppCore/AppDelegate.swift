@@ -10,5 +10,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         MainMenuBuilder.install()
         coordinator = CaptureCoordinator()
         statusItemController = StatusItemController(coordinator: coordinator)
+        Hotkeys.register(coordinator: coordinator)
+        Notifier.requestAuthorization()
     }
 }

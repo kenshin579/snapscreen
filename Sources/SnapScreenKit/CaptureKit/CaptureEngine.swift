@@ -20,6 +20,7 @@ public final class CaptureEngine {
     public init() {}
 
     /// 전체 화면: point(Cocoa 전역 좌표)가 속한 디스플레이 전체
+    @MainActor
     public func captureFullDisplay(containing point: CGPoint) async throws -> CaptureResult {
         guard let screen = NSScreen.screen(containing: point) else {
             throw CaptureError.displayNotFound
