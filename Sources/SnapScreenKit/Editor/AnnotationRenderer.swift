@@ -18,13 +18,15 @@ public extension PaletteColor {
 /// 캔버스 실시간 표시와 플래튼 내보내기가 공용으로 사용.
 @MainActor
 public enum AnnotationRenderer {
-    public static func draw(_ annotations: [Annotation], in ctx: CGContext, baseImage: CGImage) {
+    public static func draw(_ annotations: [Annotation], in ctx: CGContext,
+                            baseImage: CGImage, scale: CGFloat) {
         for annotation in annotations {
-            draw(annotation, in: ctx, baseImage: baseImage)
+            draw(annotation, in: ctx, baseImage: baseImage, scale: scale)
         }
     }
 
-    public static func draw(_ annotation: Annotation, in ctx: CGContext, baseImage: CGImage) {
+    public static func draw(_ annotation: Annotation, in ctx: CGContext,
+                            baseImage: CGImage, scale: CGFloat) {
         let color = annotation.color.nsColor.cgColor
         switch annotation.kind {
         case .arrow(let start, let end):
@@ -42,8 +44,12 @@ public enum AnnotationRenderer {
             drawText(string, at: origin, fontSize: fontSize,
                      color: annotation.color.nsColor, in: ctx)
         case .pixelate(let rect):
-            if let pixelated = pixelatedImage(from: baseImage, rect: rect) {
-                ctx.draw(pixelated, in: rect)
+            if let cached = pixelateCache[annotation.id], cached.rect == rect {
+                ctx.draw(cached.image, in: cached.clamped)
+            } else if let result = pixelatedImage(from: baseImage, rect: rect, scale: scale) {
+                if pixelateCache.count >= 64 { pixelateCache.removeAll() } // 무한 성장 방지
+                pixelateCache[annotation.id] = (rect, result.image, result.rect)
+                ctx.draw(result.image, in: result.rect)
             }
         case .stepBadge(let center, let number, let radius):
             drawBadge(number: number, center: center, radius: radius,
@@ -91,18 +97,24 @@ public enum AnnotationRenderer {
 
     private static let ciContext = CIContext()
 
-    static func pixelatedImage(from base: CGImage, rect: CGRect) -> CGImage? {
+    /// 픽셀레이트 결과 캐시 — 매 draw마다 CIFilter 재실행을 피한다 (드래그 리렌더 잔크 방지).
+    /// baseImage는 편집기 세션 동안 불변이므로 rect 비교만으로 무효화 가능.
+    private static var pixelateCache: [UUID: (rect: CGRect, image: CGImage, clamped: CGRect)] = [:]
+
+    static func pixelatedImage(from base: CGImage, rect: CGRect,
+                               scale: CGFloat) -> (image: CGImage, rect: CGRect)? {
         let clamped = rect.intersection(CGRect(x: 0, y: 0, width: base.width, height: base.height))
         guard !clamped.isEmpty else { return nil }
         let input = CIImage(cgImage: base).cropped(to: clamped)
         guard let filter = CIFilter(name: "CIPixellate") else { return nil }
         filter.setValue(input, forKey: kCIInputImageKey)
-        // 복원 공격 방지: 영역이 커도 블록이 충분히 크도록
-        let blockSize = max(12, clamped.width / 24, clamped.height / 24)
+        // 복원 공격 방지: 영역이 커도 블록이 충분히 크도록. Retina(2x)에서는 바닥값도 2배.
+        let blockSize = max(12 * scale, clamped.width / 24, clamped.height / 24)
         filter.setValue(blockSize, forKey: kCIInputScaleKey)
         filter.setValue(CIVector(x: clamped.midX, y: clamped.midY), forKey: kCIInputCenterKey)
         guard let output = filter.outputImage?.cropped(to: clamped) else { return nil }
-        return ciContext.createCGImage(output, from: clamped)
+        guard let image = ciContext.createCGImage(output, from: clamped) else { return nil }
+        return (image, clamped)
     }
 
     private static func drawBadge(number: Int, center: CGPoint, radius: CGFloat,

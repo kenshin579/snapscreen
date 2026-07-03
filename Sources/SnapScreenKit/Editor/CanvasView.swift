@@ -36,7 +36,7 @@ public final class CanvasView: NSView {
         ctx.scaleBy(x: fitScale, y: fitScale)
         ctx.interpolationQuality = .high
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
-        AnnotationRenderer.draw(store.annotations, in: ctx, baseImage: image)
+        AnnotationRenderer.draw(store.annotations, in: ctx, baseImage: image, scale: captureScale)
         drawOverlays(in: ctx) // Task 14에서 드래프트/선택 표시 확장
         ctx.restoreGState()
     }

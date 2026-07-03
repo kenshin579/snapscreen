@@ -48,7 +48,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     }
 
     private func flattened() -> CGImage? {
-        FlattenRenderer.flatten(image: result.image, annotations: store.annotations)
+        FlattenRenderer.flatten(image: result.image, annotations: store.annotations, scale: result.scale)
     }
 
     // MARK: - 메인 메뉴 액션 (MainMenuBuilder의 nil-target 셀렉터가 응답 체인으로 도달)

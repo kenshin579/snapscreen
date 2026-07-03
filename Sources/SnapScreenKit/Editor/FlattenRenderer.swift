@@ -2,7 +2,7 @@ import AppKit
 
 @MainActor
 public enum FlattenRenderer {
-    public static func flatten(image: CGImage, annotations: [Annotation]) -> CGImage? {
+    public static func flatten(image: CGImage, annotations: [Annotation], scale: CGFloat) -> CGImage? {
         guard let ctx = CGContext(data: nil, width: image.width, height: image.height,
                                   bitsPerComponent: 8, bytesPerRow: 0,
                                   space: CGColorSpace(name: CGColorSpace.sRGB)!,
@@ -15,7 +15,7 @@ public enum FlattenRenderer {
         let nsContext = NSGraphicsContext(cgContext: ctx, flipped: false)
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = nsContext
-        AnnotationRenderer.draw(annotations, in: ctx, baseImage: image)
+        AnnotationRenderer.draw(annotations, in: ctx, baseImage: image, scale: scale)
         NSGraphicsContext.restoreGraphicsState()
 
         return ctx.makeImage()
