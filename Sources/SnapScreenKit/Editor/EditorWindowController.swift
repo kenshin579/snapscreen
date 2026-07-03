@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 
 @MainActor
 public final class EditorWindowController: NSWindowController, NSWindowDelegate {
@@ -26,13 +27,41 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
                               styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
         window.title = "SnapScreen"
-        window.contentAspectRatio = pointSize
         window.isReleasedWhenClosed = false
         super.init(window: window)
 
+        let toolbarHeight: CGFloat = 44
+        window.setContentSize(CGSize(width: contentSize.width,
+                                     height: contentSize.height + toolbarHeight))
+        window.contentAspectRatio = .zero // 툴바 포함이라 비율 고정 해제
+
         canvas = CanvasView(image: result.image, captureScale: result.scale,
                             store: store, state: state)
-        window.contentView = canvas
+        let toolbar = NSHostingView(rootView: ToolbarView(
+            state: state,
+            onUndo: { [weak self] in self?.undoAction(nil) },
+            onRedo: { [weak self] in self?.redoAction(nil) },
+            onCopy: { [weak self] in self?.copyMerged(nil) },
+            onSave: { [weak self] in self?.saveImage(nil) }
+        ))
+
+        let container = NSView()
+        container.addSubview(toolbar)
+        container.addSubview(canvas)
+        toolbar.translatesAutoresizingMaskIntoConstraints = false
+        canvas.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            toolbar.topAnchor.constraint(equalTo: container.topAnchor),
+            toolbar.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            toolbar.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            toolbar.heightAnchor.constraint(equalToConstant: toolbarHeight),
+            canvas.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
+            canvas.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            canvas.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            canvas.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
+        window.contentView = container
+
         window.delegate = self
         window.center()
         window.makeKeyAndOrderFront(nil)
