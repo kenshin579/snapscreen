@@ -23,7 +23,7 @@ public final class CaptureCoordinator {
                     let result = try await self.engine.captureFullDisplay(containing: mouse)
                     self.handleCaptured(result)
                 } catch {
-                    Notifier.show(title: "캡처 실패", body: error.localizedDescription)
+                    Notifier.alertFailure(title: "캡처 실패", body: error.localizedDescription)
                 }
             }
         case .area:
@@ -42,7 +42,7 @@ public final class CaptureCoordinator {
         case .savedToFallback(let url):
             Notifier.show(title: "저장 위치 폴백", body: "데스크탑에 저장했습니다: \(url.lastPathComponent)")
         case .failed(let error):
-            Notifier.show(title: "저장 실패", body: error.localizedDescription)
+            Notifier.alertFailure(title: "저장 실패", body: error.localizedDescription)
         }
     }
 }
