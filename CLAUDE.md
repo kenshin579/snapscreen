@@ -1,0 +1,65 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 프로젝트 개요
+
+SnapScreen — macOS 14+ 메뉴바 상주 스크린샷 캡처 + 주석 편집 앱. Swift(AppKit + SwiftUI), SwiftPM 기반이며 **Xcode 프로젝트 파일이 없다** — 전 과정이 CLI로 동작한다. UI 문자열은 한국어.
+
+설계 문서: `docs/superpowers/specs/2026-07-03-snapscreen-design.md` (MVP 범위/비목표 포함)
+
+## 명령어
+
+```bash
+swift build                          # 빌드
+swift test                           # 전체 테스트
+swift test --filter FileSaverTests   # 특정 테스트 클래스만
+Scripts/bundle.sh [debug|release]    # swift build + .app 번들 조립 + ad-hoc 서명 → build/SnapScreen.app
+Scripts/run.sh                       # bundle.sh 후 기존 인스턴스 종료(pkill) + 실행
+```
+
+**캡처 동작 확인은 반드시 `Scripts/run.sh`로 실행하라.** `swift run`으로 실행하면 화면 기록 권한(TCC)이 앱이 아닌 터미널에 귀속되고, 번들 없이는 `UNUserNotificationCenter`가 크래시한다. ad-hoc 서명 특성상 코드가 바뀌면 cdhash가 달라져 화면 기록 권한을 시스템 설정에서 다시 켜야 할 수 있다 (중복 SnapScreen 항목은 수동 삭제).
+
+릴리스: `git tag v* && git push origin v*` → `.github/workflows/release.yml`이 zip을 빌드해 GitHub Release 생성.
+
+## 아키텍처
+
+실행 파일 `Sources/SnapScreen/main.swift`는 부트스트랩 몇 줄뿐이고, 모든 코드는 `Sources/SnapScreenKit/` 라이브러리에 있다:
+
+- **AppCore/** — `AppDelegate`(`.accessory` 정책), `StatusItemController`(메뉴바), `Hotkeys`(KeyboardShortcuts 패키지, ⌘⇧1/2/0), `CaptureCoordinator`(중앙 오케스트레이터), `MainMenuBuilder`
+- **CaptureKit/** — `CaptureEngine`(ScreenCaptureKit `SCScreenshotManager` 래퍼), `ScreenCapturePermission`(TCC preflight)
+- **SelectionOverlay/** — 영역 드래그 선택(`SelectionOverlayController`), 창 클릭 선택(`WindowPickerController`). 디스플레이마다 borderless NSPanel 1개
+- **Editor/** — 주석 편집기. 데이터 계층(`Annotation`/`AnnotationStore`/`AnnotationHitTester`)은 **AppKit 비의존**, UI 계층(`CanvasView`/`EditorWindowController`/`ToolbarView`)과 분리
+- **Output/** — PNG 인코딩(DPI 메타), 클립보드(PNG+TIFF 동시 선언), 파일 저장(위치 결정/충돌 회피/Desktop 폴백)
+- **Settings/**, **Support/** — 설정 저장·UI, 좌표 유틸·알림
+
+**전체 흐름**: 전역 단축키 → `CaptureCoordinator.beginCapture(mode)` → (영역/창이면 오버레이로 선택) → `CaptureEngine` → `CaptureResult{image, scale}` → `handleCaptured`가 `EditorWindowController` 열기 → 사용자가 ⌘C(클립보드)/⌘S(저장).
+
+### 좌표계 규약 (가장 중요한 크로스 파일 지식)
+
+세 좌표계가 공존하며 변환이 틀리면 캡처가 엉뚱한 곳을 찍는다:
+
+1. **Cocoa 전역 좌표** — 원점 좌하단 (`NSScreen.frame`, `NSEvent.mouseLocation`)
+2. **CG/SCK 좌표** — 디스플레이 로컬, 원점 좌상단, 포인트 (`SCStreamConfiguration.sourceRect`, `SCWindow.frame`은 CG 전역)
+3. **이미지 픽셀 좌표** — 원점 좌하단, 픽셀. **모든 Annotation은 이 좌표계로 저장**
+
+변환은 `Support/ScreenGeometry.swift`(단위 테스트 있음)와 `WindowPickerController.begin()`(CG 전역→Cocoa)에 있다. `CanvasView`는 aspect-fit + 레터박스 오프셋(`fitScale`/`fitOffset`)으로 뷰↔이미지 픽셀을 변환한다.
+
+### 스케일 스레딩
+
+`CaptureResult.scale`(Retina 배율)이 끝까지 흘러야 한다: `CanvasView.captureScale` → 주석 기본 크기(3/16/14 × scale) → `AnnotationRenderer.draw(..., scale:)`(픽셀레이트 블록 크기 `12*scale` 바닥값 — 보안 요구) → `FlattenRenderer.flatten(..., scale:)` → `PNGEncoder`(DPI 메타데이터).
+
+### 주석 렌더링 이원화
+
+`AnnotationRenderer`는 캔버스 실시간 표시(`CanvasView.draw`)와 내보내기(`FlattenRenderer.flatten`) **양쪽에서 공용**이다. 렌더링을 바꾸면 두 경로 모두 영향받는다. 픽셀레이트는 annotation UUID 키 캐시(`pixelateCache`, 64 엔트리 상한)를 쓴다.
+
+## 코드베이스 컨벤션
+
+- **모든 UI 클래스는 `@MainActor`** — `FlattenRenderer`/`AnnotationRenderer`도 포함 (NSGraphicsContext/AppKit 드로잉 때문)
+- **모든 NSWindow/NSPanel에 `isReleasedWhenClosed = false`** — 누락 시 close에서 크래시/누수
+- **오버레이 패널의 esc는 패널 레벨 `cancelOperation(_:)` 오버라이드로 처리** — view의 keyDown만으로는 first responder 문제로 동작 보장이 안 됨
+- **메인 메뉴는 nil-target 문자열 셀렉터** (`MainMenuBuilder`: `saveImage:`/`undoAction:`/`redoAction:`/`copyMerged:`) — `EditorWindowController`의 `@objc` 메서드 철자와 **정확히 일치해야 하며 오타는 무음 실패**한다. `saveDocument:`는 NSDocument와 충돌하므로 쓰지 말 것
+- **코디네이터의 중복 실행 방지는 await 앞에서 동기적으로** — `.window` 케이스의 `isPickingWindow` 플래그 패턴 참조 (guard와 할당 사이에 await가 끼면 레이스)
+- 에러 표시: 하드 실패는 `Notifier.alertFailure`(beep+알림), 소프트 안내는 `Notifier.show`
+- 로직(Annotation 모델, 저장 위치, 좌표 변환, 파일명)은 AppKit 비의존으로 유지해 `Tests/SnapScreenKitTests/`에서 단위 테스트한다. UI/캡처/TCC는 자동화 불가 — `docs/manual-test-checklist.md`(릴리스 전 실기기 체크리스트)로 검증한다
+- 한글 포함 파일은 UTF-8 인코딩 확인 (`file -I`)
