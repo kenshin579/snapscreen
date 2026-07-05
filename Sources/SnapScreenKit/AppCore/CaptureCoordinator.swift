@@ -12,6 +12,7 @@ public final class CaptureCoordinator {
     private var windowPicker: WindowPickerController?
     private var isPickingWindow = false
     private var editors: [EditorWindowController] = []
+    public var policyManager: ActivationPolicyManager?
 
     public init() {
         settings.load()
@@ -87,7 +88,8 @@ public final class CaptureCoordinator {
         // controller가 onClose 클로저를 통해 자신을 보유하는 순환은
         // windowWillClose에서 onClose = nil로 끊긴다
         var controller: EditorWindowController?
-        controller = EditorWindowController(result: result, settings: settings) { [weak self] in
+        controller = EditorWindowController(result: result, settings: settings,
+                                            policyManager: policyManager) { [weak self] in
             self?.editors.removeAll { $0 === controller }
         }
         if let controller { editors.append(controller) }

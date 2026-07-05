@@ -9,10 +9,14 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     private let state = EditorState()
     private var canvas: CanvasView!
     private var onClose: (() -> Void)?
+    private let policyManager: ActivationPolicyManager?
 
-    public init(result: CaptureResult, settings: SettingsStore, onClose: (() -> Void)? = nil) {
+    public init(result: CaptureResult, settings: SettingsStore,
+                policyManager: ActivationPolicyManager? = nil,
+                onClose: (() -> Void)? = nil) {
         self.result = result
         self.settings = settings
+        self.policyManager = policyManager
         self.onClose = onClose
 
         let pointSize = CGSize(width: CGFloat(result.image.width) / result.scale,
@@ -68,11 +72,13 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(canvas)
         NSApp.activate(ignoringOtherApps: true)
+        policyManager?.register(window)
     }
 
     required init?(coder: NSCoder) { fatalError() }
 
     public func windowWillClose(_ notification: Notification) {
+        if let window { policyManager?.unregister(window) }
         onClose?() // 스펙: 닫으면 경고 없이 폐기
         onClose = nil
     }
