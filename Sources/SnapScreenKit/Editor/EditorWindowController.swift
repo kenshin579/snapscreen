@@ -71,8 +71,8 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         window.center()
         window.makeKeyAndOrderFront(nil)
         window.makeFirstResponder(canvas)
-        NSApp.activate(ignoringOtherApps: true)
         policyManager?.register(window)
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     required init?(coder: NSCoder) { fatalError() }

@@ -5,23 +5,34 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var coordinator: CaptureCoordinator!
     private var statusItemController: StatusItemController!
     private var settingsController: SettingsWindowController?
+    private let activationPolicyManager = ActivationPolicyManager()
+    private var homeWindowController: HomeWindowController?
     public private(set) var updateState = UpdateState()
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.accessory)
         MainMenuBuilder.install()
         coordinator = CaptureCoordinator()
+        coordinator.policyManager = activationPolicyManager
+
+        homeWindowController = HomeWindowController(
+            policyManager: activationPolicyManager,
+            onCapture: { [weak coordinator] mode in coordinator?.beginCapture(mode) })
+        homeWindowController?.show()
+
         statusItemController = StatusItemController(
             coordinator: coordinator,
-            updateState: updateState) { [weak self] in
-            guard let self else { return }
-            if self.settingsController == nil {
-                self.settingsController = SettingsWindowController(
-                    settings: self.coordinator.settings,
-                    updateState: self.updateState)
-            }
-            self.settingsController?.show()
-        }
+            updateState: updateState,
+            openHome: { [weak self] in self?.homeWindowController?.show() },
+            openSettings: { [weak self] in
+                guard let self else { return }
+                if self.settingsController == nil {
+                    self.settingsController = SettingsWindowController(
+                        settings: self.coordinator.settings,
+                        updateState: self.updateState,
+                        policyManager: self.activationPolicyManager)
+                }
+                self.settingsController?.show()
+            })
         Hotkeys.register(coordinator: coordinator)
         Notifier.requestAuthorization()
 
