@@ -51,6 +51,14 @@ public enum AnnotationRenderer {
                 pixelateCache[annotation.id] = (rect, result.image, result.rect)
                 ctx.draw(result.image, in: result.rect)
             }
+        case .blur(let rect):
+            if let cached = pixelateCache[annotation.id], cached.rect == rect {
+                ctx.draw(cached.image, in: cached.clamped)
+            } else if let result = blurredImage(from: baseImage, rect: rect, scale: scale) {
+                if pixelateCache.count >= 64 { pixelateCache.removeAll() } // 무한 성장 방지
+                pixelateCache[annotation.id] = (rect, result.image, result.rect)
+                ctx.draw(result.image, in: result.rect)
+            }
         case .stepBadge(let center, let number, let radius):
             drawBadge(number: number, center: center, radius: radius,
                       color: annotation.color.nsColor, in: ctx)
@@ -97,8 +105,9 @@ public enum AnnotationRenderer {
 
     private static let ciContext = CIContext()
 
-    /// 픽셀레이트 결과 캐시 — 매 draw마다 CIFilter 재실행을 피한다 (드래그 리렌더 잔크 방지).
-    /// baseImage는 편집기 세션 동안 불변이므로 rect 비교만으로 무효화 가능.
+    /// 픽셀레이트/블러 결과 캐시 — 매 draw마다 CIFilter 재실행을 피한다 (드래그 리렌더 잔크 방지).
+    /// baseImage는 편집기 세션 동안 불변이므로 rect 비교만으로 무효화 가능. 키는 annotation UUID라
+    /// 두 도구가 공유해도 충돌 없음.
     private static var pixelateCache: [UUID: (rect: CGRect, image: CGImage, clamped: CGRect)] = [:]
 
     static func pixelatedImage(from base: CGImage, rect: CGRect,
@@ -112,6 +121,23 @@ public enum AnnotationRenderer {
         let blockSize = max(12 * scale, clamped.width / 24, clamped.height / 24)
         filter.setValue(blockSize, forKey: kCIInputScaleKey)
         filter.setValue(CIVector(x: clamped.midX, y: clamped.midY), forKey: kCIInputCenterKey)
+        guard let output = filter.outputImage?.cropped(to: clamped) else { return nil }
+        guard let image = ciContext.createCGImage(output, from: clamped) else { return nil }
+        return (image, clamped)
+    }
+
+    /// 가우시안 블러 — 시각적 완화용. 민감정보 가리기에는 모자이크(pixelate)를 권장
+    /// (약한 가우시안 블러는 복원 공격 가능).
+    static func blurredImage(from base: CGImage, rect: CGRect,
+                             scale: CGFloat) -> (image: CGImage, rect: CGRect)? {
+        let clamped = rect.intersection(CGRect(x: 0, y: 0, width: base.width, height: base.height))
+        guard !clamped.isEmpty else { return nil }
+        // clampedToExtent: 블러가 경계 밖 투명 픽셀을 섞어 가장자리가 어두워지는 것을 방지
+        let input = CIImage(cgImage: base).cropped(to: clamped).clampedToExtent()
+        guard let filter = CIFilter(name: "CIGaussianBlur") else { return nil }
+        filter.setValue(input, forKey: kCIInputImageKey)
+        let radius = max(8 * scale, min(clamped.width, clamped.height) / 24)
+        filter.setValue(radius, forKey: kCIInputRadiusKey)
         guard let output = filter.outputImage?.cropped(to: clamped) else { return nil }
         guard let image = ciContext.createCGImage(output, from: clamped) else { return nil }
         return (image, clamped)

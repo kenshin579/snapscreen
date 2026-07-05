@@ -63,4 +63,15 @@ final class AnnotationStoreTests: XCTestCase {
         store.remove(id: store.annotations[0].id)
         XCTAssertEqual(store.nextStepNumber, 3)
     }
+
+    func testTranslateBlur() {
+        let store = AnnotationStore()
+        let a = Annotation(kind: .blur(CGRect(x: 10, y: 20, width: 100, height: 50)))
+        store.add(a)
+        store.translate(id: a.id, by: CGVector(dx: 5, dy: -5))
+        guard case .blur(let r) = store.annotations[0].kind else {
+            return XCTFail("kind changed")
+        }
+        XCTAssertEqual(r, CGRect(x: 15, y: 15, width: 100, height: 50))
+    }
 }
