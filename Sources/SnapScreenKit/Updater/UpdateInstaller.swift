@@ -34,19 +34,31 @@ public enum UpdateInstaller {
             // 4. 번들 교체 (실행 중 rename은 macOS에서 허용)
             let currentURL = Bundle.main.bundleURL
             let backupURL = workDir.appendingPathComponent("SnapScreen-old.app")
-            try fm.moveItem(at: currentURL, to: backupURL)
+            do {
+                try fm.moveItem(at: currentURL, to: backupURL)
+            } catch {
+                return "앱 교체에 실패했습니다 (설치 폴더 권한 확인): \(error.localizedDescription)"
+            }
             do {
                 try fm.moveItem(at: newApp, to: currentURL)
             } catch {
-                try? fm.moveItem(at: backupURL, to: currentURL) // 롤백
-                return "앱 교체에 실패했습니다 (설치 폴더 권한 확인): \(error.localizedDescription)"
+                do {
+                    try fm.moveItem(at: backupURL, to: currentURL) // 롤백
+                    return "앱 교체에 실패했습니다 (설치 폴더 권한 확인): \(error.localizedDescription)"
+                } catch {
+                    return "앱 교체 중 오류가 발생했고 복구도 실패했습니다. 이전 버전이 다음 위치에 있습니다: \(backupURL.path)"
+                }
             }
 
             // 5. 재실행: 분리 프로세스가 1초 후 새 번들을 열고, 현재 앱은 종료
-            let relaunch = Process()
-            relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
-            relaunch.arguments = ["-c", "sleep 1; /usr/bin/open \"\(currentURL.path)\""]
-            try relaunch.run()
+            do {
+                let relaunch = Process()
+                relaunch.executableURL = URL(fileURLWithPath: "/bin/sh")
+                relaunch.arguments = ["-c", "sleep 1; /usr/bin/open \"$0\"", currentURL.path]
+                try relaunch.run()
+            } catch {
+                return "업데이트는 완료되었습니다. 앱이 자동으로 재실행되지 않으면 수동으로 실행해 주세요."
+            }
             NSApp.terminate(nil)
             return nil // 도달하지 않음
         } catch {
@@ -58,12 +70,16 @@ public enum UpdateInstaller {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = args
+        let stderrPipe = Pipe()
+        process.standardError = stderrPipe
         try process.run()
         process.waitUntilExit()
         guard process.terminationStatus == 0 else {
+            let stderr = String(data: stderrPipe.fileHandleForReading.readDataToEndOfFile(),
+                                encoding: .utf8) ?? ""
             throw NSError(domain: "UpdateInstaller", code: Int(process.terminationStatus),
                           userInfo: [NSLocalizedDescriptionKey:
-                                        "\(path) 종료 코드 \(process.terminationStatus)"])
+                                        "\(path) 종료 코드 \(process.terminationStatus): \(stderr.prefix(200))"])
         }
     }
 }
