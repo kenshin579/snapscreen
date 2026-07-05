@@ -11,7 +11,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         MainMenuBuilder.install()
         coordinator = CaptureCoordinator()
-        statusItemController = StatusItemController(coordinator: coordinator) { [weak self] in
+        statusItemController = StatusItemController(
+            coordinator: coordinator,
+            updateState: updateState) { [weak self] in
             guard let self else { return }
             if self.settingsController == nil {
                 self.settingsController = SettingsWindowController(

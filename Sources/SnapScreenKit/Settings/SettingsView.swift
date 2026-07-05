@@ -85,6 +85,7 @@ public struct SettingsView: View {
                     alert.messageText = "업데이트 완료"
                     alert.informativeText = errorMessage
                     alert.addButton(withTitle: "확인")
+                    NSApp.activate(ignoringOtherApps: true)
                     alert.runModal()
                 } else {
                     updateState.phase = .failed(errorMessage)
@@ -93,6 +94,7 @@ public struct SettingsView: View {
                     alert.informativeText = errorMessage + "\n릴리스 페이지에서 수동으로 설치할 수 있습니다."
                     alert.addButton(withTitle: "릴리스 페이지 열기")
                     alert.addButton(withTitle: "닫기")
+                    NSApp.activate(ignoringOtherApps: true)
                     if alert.runModal() == .alertFirstButtonReturn {
                         NSWorkspace.shared.open(UpdateChecker.releasesPageURL)
                     }
