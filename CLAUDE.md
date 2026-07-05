@@ -26,12 +26,13 @@ Scripts/run.sh                       # bundle.sh 후 기존 인스턴스 종료(
 
 실행 파일 `Sources/SnapScreen/main.swift`는 부트스트랩 몇 줄뿐이고, 모든 코드는 `Sources/SnapScreenKit/` 라이브러리에 있다:
 
-- **AppCore/** — `AppDelegate`(`.accessory` 정책), `StatusItemController`(메뉴바), `Hotkeys`(KeyboardShortcuts 패키지, ⌘⇧1/2/0), `CaptureCoordinator`(중앙 오케스트레이터), `MainMenuBuilder`
+- **AppCore/** — `AppDelegate`, `StatusItemController`(메뉴바), `Hotkeys`(KeyboardShortcuts 패키지, ⌘⇧1/2/0), `CaptureCoordinator`(중앙 오케스트레이터), `MainMenuBuilder`, `ActivationPolicyManager`(아래 활성화 정책 참조)
 - **CaptureKit/** — `CaptureEngine`(ScreenCaptureKit `SCScreenshotManager` 래퍼), `ScreenCapturePermission`(TCC preflight)
 - **SelectionOverlay/** — 영역 드래그 선택(`SelectionOverlayController`), 창 클릭 선택(`WindowPickerController`). 디스플레이마다 borderless NSPanel 1개
 - **Editor/** — 주석 편집기. 데이터 계층(`Annotation`/`AnnotationStore`/`AnnotationHitTester`)은 **AppKit 비의존**, UI 계층(`CanvasView`/`EditorWindowController`/`ToolbarView`)과 분리
 - **Output/** — PNG 인코딩(DPI 메타), 클립보드(PNG+TIFF 동시 선언), 파일 저장(위치 결정/충돌 회피/Desktop 폴백)
 - **Updater/** — 인앱 업데이트. `UpdateChecker`(GitHub API+버전 비교, AppKit 비의존), `UpdateState`(공유 상태), `UpdateInstaller`(다운로드→번들 교체→재실행). 릴리스 zip 에셋 이름 규약 `SnapScreen-vX.Y.Z.zip`을 바꾸면 구버전 업데이터가 깨진다
+- **Home/** — 홈 창(`HomeView` 캡처 버튼 3개 + `HomeWindowController`). 앱 실행 시 자동 표시.
 - **Settings/**, **Support/** — 설정 저장·UI, 좌표 유틸·알림
 
 **전체 흐름**: 전역 단축키 → `CaptureCoordinator.beginCapture(mode)` → (영역/창이면 오버레이로 선택) → `CaptureEngine` → `CaptureResult{image, scale}` → `handleCaptured`가 `EditorWindowController` 열기 → 사용자가 ⌘C(클립보드)/⌘S(저장).
@@ -59,6 +60,7 @@ Scripts/run.sh                       # bundle.sh 후 기존 인스턴스 종료(
 - **모든 UI 클래스는 `@MainActor`** — `FlattenRenderer`/`AnnotationRenderer`도 포함 (NSGraphicsContext/AppKit 드로잉 때문)
 - **모든 NSWindow/NSPanel에 `isReleasedWhenClosed = false`** — 누락 시 close에서 크래시/누수
 - **오버레이 패널의 esc는 패널 레벨 `cancelOperation(_:)` 오버라이드로 처리** — view의 keyDown만으로는 first responder 문제로 동작 보장이 안 됨
+- **활성화 정책**: `ActivationPolicyManager`가 등록된 표시 창 수를 추적 — 0이면 `.accessory`(독 숨김), 1개 이상이면 `.regular`(독 표시). 홈·편집기·설정 창이 생성/닫힘 시 register/unregister(반드시 `windowWillClose`에서 unregister — 좀비 토큰 방지). `AppDelegate`는 더 이상 시작 시 `.accessory`를 직접 설정하지 않는다.
 - **메인 메뉴는 nil-target 문자열 셀렉터** (`MainMenuBuilder`: `saveImage:`/`undoAction:`/`redoAction:`/`copyMerged:`) — `EditorWindowController`의 `@objc` 메서드 철자와 **정확히 일치해야 하며 오타는 무음 실패**한다. `saveDocument:`는 NSDocument와 충돌하므로 쓰지 말 것
 - **코디네이터의 중복 실행 방지는 await 앞에서 동기적으로** — `.window` 케이스의 `isPickingWindow` 플래그 패턴 참조 (guard와 할당 사이에 await가 끼면 레이스)
 - 에러 표시: 하드 실패는 `Notifier.alertFailure`(beep+알림), 소프트 안내는 `Notifier.show`
