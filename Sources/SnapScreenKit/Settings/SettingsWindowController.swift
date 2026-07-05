@@ -3,8 +3,9 @@ import SwiftUI
 
 @MainActor
 public final class SettingsWindowController: NSWindowController {
-    public init(settings: SettingsStore) {
-        let hosting = NSHostingController(rootView: SettingsView(settings: settings))
+    public init(settings: SettingsStore, updateState: UpdateState) {
+        let hosting = NSHostingController(rootView: SettingsView(settings: settings,
+                                                                 updateState: updateState))
         let window = NSWindow(contentViewController: hosting)
         window.title = "SnapScreen 설정"
         window.styleMask = [.titled, .closable]

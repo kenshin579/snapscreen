@@ -14,7 +14,9 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItemController = StatusItemController(coordinator: coordinator) { [weak self] in
             guard let self else { return }
             if self.settingsController == nil {
-                self.settingsController = SettingsWindowController(settings: self.coordinator.settings)
+                self.settingsController = SettingsWindowController(
+                    settings: self.coordinator.settings,
+                    updateState: self.updateState)
             }
             self.settingsController?.show()
         }

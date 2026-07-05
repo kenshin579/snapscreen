@@ -4,6 +4,11 @@ import AppKit
 /// 성공 시 NSApp.terminate로 돌아오지 않는다. 실패 시 에러 메시지를 반환한다.
 @MainActor
 public enum UpdateInstaller {
+    /// 번들 교체는 성공했으나 자동 재실행 프로세스 기동에 실패한 경우 반환되는 메시지.
+    /// (교체는 성공했으므로 "실패"가 아니라 안내로 표시해야 한다)
+    public static let relaunchFailedMessage =
+        "업데이트는 완료되었습니다. 앱이 자동으로 재실행되지 않으면 수동으로 실행해 주세요."
+
     public static func install(version: String, downloadURL: URL) async -> String? {
         let fm = FileManager.default
         let workDir = fm.temporaryDirectory
@@ -57,7 +62,7 @@ public enum UpdateInstaller {
                 relaunch.arguments = ["-c", "sleep 1; /usr/bin/open \"$0\"", currentURL.path]
                 try relaunch.run()
             } catch {
-                return "업데이트는 완료되었습니다. 앱이 자동으로 재실행되지 않으면 수동으로 실행해 주세요."
+                return relaunchFailedMessage
             }
             NSApp.terminate(nil)
             return nil // 도달하지 않음
