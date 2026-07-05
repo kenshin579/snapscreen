@@ -17,6 +17,8 @@ final class BlurRenderTests: XCTestCase {
         return ctx.makeImage()!
     }
 
+    /// 주의: y는 하단 기준(bottom-origin) — CGImage를 bottom-left 원점 컨텍스트에 그리므로
+    /// y=0이 이미지 최하단 행이다. 현재 테스트들은 y-불변 이미지라 영향 없음.
     private func pixel(_ image: CGImage, x: Int, y: Int) -> [UInt8] {
         var data = [UInt8](repeating: 0, count: 4)
         let ctx = CGContext(data: &data, width: 1, height: 1,
