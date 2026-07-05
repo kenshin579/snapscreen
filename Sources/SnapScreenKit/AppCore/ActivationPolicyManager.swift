@@ -5,9 +5,9 @@ import AppKit
 @MainActor
 public final class ActivationPolicyManager {
     private var registered: Set<ObjectIdentifier> = []
-    private let applyPolicy: (NSApplication.ActivationPolicy) -> Void
+    private let applyPolicy: @MainActor (NSApplication.ActivationPolicy) -> Void
 
-    public init(applyPolicy: @escaping (NSApplication.ActivationPolicy) -> Void
+    public init(applyPolicy: @MainActor @escaping (NSApplication.ActivationPolicy) -> Void
                 = { NSApp.setActivationPolicy($0) }) {
         self.applyPolicy = applyPolicy
     }
