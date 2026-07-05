@@ -132,7 +132,9 @@ public enum AnnotationRenderer {
                              scale: CGFloat) -> (image: CGImage, rect: CGRect)? {
         let clamped = rect.intersection(CGRect(x: 0, y: 0, width: base.width, height: base.height))
         guard !clamped.isEmpty else { return nil }
-        // clampedToExtent: 블러가 경계 밖 투명 픽셀을 섞어 가장자리가 어두워지는 것을 방지
+        // crop 후 clampedToExtent: 영역 가장자리 픽셀을 복제해 블러가 경계 밖 투명 픽셀로
+        // 어두워지는 것을 방지한다. 의도적으로 영역 밖 실제 픽셀은 섞지 않는다(자기 완결 블러) —
+        // 인접 콘텐츠가 블러 영역으로 새지 않고, 이미지 경계에서도 동일하게 동작한다.
         let input = CIImage(cgImage: base).cropped(to: clamped).clampedToExtent()
         guard let filter = CIFilter(name: "CIGaussianBlur") else { return nil }
         filter.setValue(input, forKey: kCIInputImageKey)
