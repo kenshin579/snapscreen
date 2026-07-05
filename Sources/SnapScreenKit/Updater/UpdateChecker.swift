@@ -53,7 +53,9 @@ public enum UpdateChecker {
         let latest = release.tagName.hasPrefix("v")
             ? String(release.tagName.dropFirst()) : release.tagName
         guard compareVersions(currentVersion, latest) < 0 else { return .upToDate }
-        guard let asset = release.assets.first(where: { $0.name.hasSuffix(".zip") }) else {
+        guard let asset = release.assets.first(where: {
+            $0.name.hasPrefix("SnapScreen-") && $0.name.hasSuffix(".zip")
+        }) else {
             return .failed("릴리스에 zip 에셋이 없습니다")
         }
         return .available(version: latest, downloadURL: asset.browserDownloadURL)
@@ -63,6 +65,7 @@ public enum UpdateChecker {
     public static func check(currentVersion: String = AppInfo.version) async -> UpdateStatus {
         var request = URLRequest(url: latestReleaseURL)
         request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
+        request.timeoutInterval = 15
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
