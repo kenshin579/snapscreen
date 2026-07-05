@@ -31,6 +31,7 @@ Scripts/run.sh                       # bundle.sh 후 기존 인스턴스 종료(
 - **SelectionOverlay/** — 영역 드래그 선택(`SelectionOverlayController`), 창 클릭 선택(`WindowPickerController`). 디스플레이마다 borderless NSPanel 1개
 - **Editor/** — 주석 편집기. 데이터 계층(`Annotation`/`AnnotationStore`/`AnnotationHitTester`)은 **AppKit 비의존**, UI 계층(`CanvasView`/`EditorWindowController`/`ToolbarView`)과 분리
 - **Output/** — PNG 인코딩(DPI 메타), 클립보드(PNG+TIFF 동시 선언), 파일 저장(위치 결정/충돌 회피/Desktop 폴백)
+- **Updater/** — 인앱 업데이트. `UpdateChecker`(GitHub API+버전 비교, AppKit 비의존), `UpdateState`(공유 상태), `UpdateInstaller`(다운로드→번들 교체→재실행). 릴리스 zip 에셋 이름 규약 `SnapScreen-vX.Y.Z.zip`을 바꾸면 구버전 업데이터가 깨진다
 - **Settings/**, **Support/** — 설정 저장·UI, 좌표 유틸·알림
 
 **전체 흐름**: 전역 단축키 → `CaptureCoordinator.beginCapture(mode)` → (영역/창이면 오버레이로 선택) → `CaptureEngine` → `CaptureResult{image, scale}` → `handleCaptured`가 `EditorWindowController` 열기 → 사용자가 ⌘C(클립보드)/⌘S(저장).
