@@ -167,6 +167,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         case .rectangle: kind = .rectangle(rect)
         case .ellipse: kind = .ellipse(rect)
         case .pixelate: kind = .pixelate(rect)
+        case .blur: kind = .blur(rect)
         case .text, .stepBadge: kind = .rectangle(rect) // 도달하지 않음 (mouseDown에서 처리)
         }
         return Annotation(kind: kind, color: state.color, lineWidth: defaultLineWidth)
@@ -194,7 +195,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             }
             let mapping: [String: EditorTool] = [
                 "a": .arrow, "r": .rectangle, "o": .ellipse,
-                "t": .text, "b": .pixelate, "n": .stepBadge
+                "t": .text, "g": .blur, "b": .pixelate, "n": .stepBadge
             ]
             if let tool = mapping[char] {
                 state.tool = tool

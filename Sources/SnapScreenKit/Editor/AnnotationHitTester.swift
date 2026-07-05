@@ -18,7 +18,7 @@ public enum AnnotationHitTester {
             let inner = r.insetBy(dx: tol, dy: tol)
             let insideInner = inner.width > 0 && inner.height > 0 && inner.contains(p)
             return outer.contains(p) && !insideInner
-        case .text, .pixelate:
+        case .text, .pixelate, .blur:
             return a.kind.bounds.insetBy(dx: -tol, dy: -tol).contains(p)
         case .stepBadge(let c, _, let r):
             return hypot(p.x - c.x, p.y - c.y) <= r + tol

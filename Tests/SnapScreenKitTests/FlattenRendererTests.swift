@@ -29,4 +29,13 @@ final class FlattenRendererTests: XCTestCase {
         XCTAssertEqual(out?.width, 200)
         XCTAssertEqual(out?.height, 100)
     }
+
+    @MainActor
+    func testFlattenWithBlurPreservesDimensions() {
+        let base = makeImage(width: 200, height: 100)
+        let a = Annotation(kind: .blur(CGRect(x: 10, y: 10, width: 80, height: 40)))
+        let out = FlattenRenderer.flatten(image: base, annotations: [a], scale: 2)
+        XCTAssertEqual(out?.width, 200)
+        XCTAssertEqual(out?.height, 100)
+    }
 }

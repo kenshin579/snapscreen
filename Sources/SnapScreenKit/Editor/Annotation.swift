@@ -11,6 +11,7 @@ public enum AnnotationKind: Equatable {
     case ellipse(CGRect)
     case text(origin: CGPoint, string: String, fontSize: CGFloat)
     case pixelate(CGRect)
+    case blur(CGRect)
     case stepBadge(center: CGPoint, number: Int, radius: CGFloat)
 
     public func translated(by d: CGVector) -> AnnotationKind {
@@ -23,6 +24,7 @@ public enum AnnotationKind: Equatable {
         case .text(let o, let s, let f):
             return .text(origin: CGPoint(x: o.x + d.dx, y: o.y + d.dy), string: s, fontSize: f)
         case .pixelate(let r): return .pixelate(r.offsetBy(dx: d.dx, dy: d.dy))
+        case .blur(let r): return .blur(r.offsetBy(dx: d.dx, dy: d.dy))
         case .stepBadge(let c, let n, let r):
             return .stepBadge(center: CGPoint(x: c.x + d.dx, y: c.y + d.dy), number: n, radius: r)
         }
@@ -34,7 +36,7 @@ public enum AnnotationKind: Equatable {
         case .arrow(let s, let e):
             return CGRect(x: min(s.x, e.x), y: min(s.y, e.y),
                           width: abs(s.x - e.x), height: abs(s.y - e.y))
-        case .rectangle(let r), .ellipse(let r), .pixelate(let r):
+        case .rectangle(let r), .ellipse(let r), .pixelate(let r), .blur(let r):
             return r
         case .text(let o, let s, let f):
             // AppKit 없이 근사: 라틴 0.6em, CJK 1.0em. 높이 1.3em

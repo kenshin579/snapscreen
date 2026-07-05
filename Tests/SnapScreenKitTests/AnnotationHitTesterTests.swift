@@ -25,6 +25,12 @@ final class AnnotationHitTesterTests: XCTestCase {
         XCTAssertNil(AnnotationHitTester.hitTest(CGPoint(x: 90, y: 90), annotations: [a]))
     }
 
+    func testBlurHitsInside() {
+        let a = Annotation(kind: .blur(CGRect(x: 0, y: 0, width: 100, height: 100)))
+        XCTAssertNotNil(AnnotationHitTester.hitTest(CGPoint(x: 50, y: 50), annotations: [a]))
+        XCTAssertNil(AnnotationHitTester.hitTest(CGPoint(x: 200, y: 200), annotations: [a]))
+    }
+
     func testTopmostWins() {
         let bottom = Annotation(kind: .pixelate(CGRect(x: 0, y: 0, width: 100, height: 100)))
         let top = Annotation(kind: .pixelate(CGRect(x: 40, y: 40, width: 100, height: 100)))
