@@ -282,6 +282,11 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         needsDisplay = true
     }
 
+    /// crop 모드 중 도구가 전환된 경우 등, 활성 상태일 때만 crop을 취소
+    func cancelCropIfActive() {
+        if isCropping { endCrop() }
+    }
+
     private func endCrop() {
         isCropping = false
         cropStart = nil
