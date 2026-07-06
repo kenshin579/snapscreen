@@ -328,7 +328,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         confirm.target = self
         confirm.action = #selector(cropConfirmClicked)
         confirm.toolTip = "자르기 (⏎)"
-        styleCropButton(confirm, background: .systemGreen)
+        styleCropButton(confirm, background: NSColor.systemGreen.withAlphaComponent(0.8))
 
         let cancel = NSButton(frame: CGRect(x: viewMaxX - size, y: viewMinY + gap,
                                             width: size, height: size))
@@ -336,7 +336,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         cancel.target = self
         cancel.action = #selector(cropCancelClicked)
         cancel.toolTip = "취소 (esc)"
-        styleCropButton(cancel, background: .systemRed)
+        styleCropButton(cancel, background: NSColor.systemRed.withAlphaComponent(0.8))
 
         addSubview(confirm); addSubview(cancel)
         cropConfirmButton = confirm; cropCancelButton = cancel
@@ -355,7 +355,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         layer.backgroundColor = background.cgColor
         layer.cornerRadius = button.frame.height / 2
         layer.shadowColor = NSColor.black.cgColor
-        layer.shadowOpacity = 0.35
+        layer.shadowOpacity = 0.25
         layer.shadowRadius = 3
         layer.shadowOffset = CGSize(width: 0, height: -1)
         layer.masksToBounds = false
