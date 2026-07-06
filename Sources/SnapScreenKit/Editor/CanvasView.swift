@@ -273,6 +273,8 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
 
     func beginCrop() {
         commitTextFieldIfNeeded()
+        // 미커밋 텍스트가 방금 주석으로 커밋됐을 수 있으므로 재검증 — 주석이 있으면 crop 진입 안 함
+        guard store.annotations.isEmpty else { return }
         selectedID = nil
         isCropping = true
         cropStart = nil
