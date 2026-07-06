@@ -2,7 +2,7 @@ import AppKit
 
 @MainActor
 public final class CanvasView: NSView, NSTextFieldDelegate {
-    let image: CGImage
+    var image: CGImage
     let captureScale: CGFloat
     let store: AnnotationStore
     let state: EditorState
@@ -17,6 +17,15 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     private var draft: Annotation?
     private var textField: NSTextField?
     private var pendingTextOrigin: CGPoint?
+
+    // crop 모드 (이미지 픽셀 좌하단 좌표)
+    private var isCropping = false
+    private var cropStart: CGPoint?
+    private var cropRect: CGRect?
+    private var cropConfirmButton: NSButton?
+    private var cropCancelButton: NSButton?
+    /// 확정된 crop 영역(이미지 픽셀 좌표)을 컨트롤러에 전달
+    var onCropConfirmed: ((CGRect) -> Void)?
 
     /// 캡처 배율 기준 기본 크기 (Retina에서 주석이 너무 얇아지지 않게)
     private var defaultLineWidth: CGFloat { 3 * captureScale }
@@ -50,6 +59,12 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         let p = convert(event.locationInWindow, from: nil)
         return CGPoint(x: (p.x - fitOffset.x) / fitScale,
                        y: (p.y - fitOffset.y) / fitScale)
+    }
+
+    /// crop 등으로 캔버스 이미지를 교체
+    func replaceImage(_ newImage: CGImage) {
+        image = newImage
+        needsDisplay = true
     }
 
     public override func draw(_ dirtyRect: NSRect) {
@@ -90,6 +105,22 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             ctx.stroke(bounds.insetBy(dx: -6 * captureScale, dy: -6 * captureScale))
             ctx.setLineDash(phase: 0, lengths: [])
         }
+        if isCropping {
+            let imageRect = CGRect(x: 0, y: 0, width: image.width, height: image.height)
+            ctx.setFillColor(NSColor(white: 0, alpha: 0.4).cgColor)
+            if let rect = cropRect {
+                let path = CGMutablePath()
+                path.addRect(imageRect)
+                path.addRect(rect)
+                ctx.addPath(path)
+                ctx.fillPath(using: .evenOdd)
+                ctx.setStrokeColor(NSColor.controlAccentColor.cgColor)
+                ctx.setLineWidth(1.0 / fitScale)
+                ctx.stroke(rect)
+            } else {
+                ctx.fill(imageRect)
+            }
+        }
     }
 
     // MARK: - Mouse
@@ -97,6 +128,13 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     public override func mouseDown(with event: NSEvent) {
         commitTextFieldIfNeeded()
         let p = imagePoint(from: event)
+        if isCropping {
+            cropStart = clampToImage(p)
+            cropRect = nil
+            removeCropButtons()
+            needsDisplay = true
+            return
+        }
         // 레터박스(이미지 밖) 클릭은 무시 — flatten 시 유실될 주석 생성 방지
         guard (0...CGFloat(image.width)).contains(p.x),
               (0...CGFloat(image.height)).contains(p.y) else { return }
@@ -125,6 +163,13 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     }
 
     public override func mouseDragged(with event: NSEvent) {
+        if isCropping, let start = cropStart {
+            let p = clampToImage(imagePoint(from: event))
+            cropRect = CGRect(x: min(start.x, p.x), y: min(start.y, p.y),
+                              width: abs(start.x - p.x), height: abs(start.y - p.y))
+            needsDisplay = true
+            return
+        }
         let p = imagePoint(from: event)
         switch dragMode {
         case .drawing(let start):
@@ -141,6 +186,16 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     }
 
     public override func mouseUp(with event: NSEvent) {
+        if isCropping {
+            cropStart = nil
+            if let rect = cropRect, rect.width >= 8, rect.height >= 8 {
+                showCropButtons(for: rect)
+            } else {
+                cropRect = nil
+            }
+            needsDisplay = true
+            return
+        }
         switch dragMode {
         case .drawing:
             if let draft, draft.kind.bounds.width >= 3 || draft.kind.bounds.height >= 3 {
@@ -176,6 +231,13 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     // MARK: - Keyboard
 
     public override func keyDown(with event: NSEvent) {
+        if isCropping {
+            switch event.keyCode {
+            case 36, 76: confirmCrop(); return   // return, enter
+            case 53: endCrop(); return            // esc
+            default: break
+            }
+        }
         switch event.keyCode {
         case 51, 117: // delete, forward delete
             if let selectedID {
@@ -199,11 +261,82 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             ]
             if let tool = mapping[char] {
                 state.tool = tool
+            } else if char == "c", store.annotations.isEmpty {
+                beginCrop()
             } else {
                 super.keyDown(with: event)
             }
         }
     }
+
+    // MARK: - Crop
+
+    func beginCrop() {
+        commitTextFieldIfNeeded()
+        selectedID = nil
+        isCropping = true
+        cropStart = nil
+        cropRect = nil
+        removeCropButtons()
+        window?.makeFirstResponder(self)
+        needsDisplay = true
+    }
+
+    private func endCrop() {
+        isCropping = false
+        cropStart = nil
+        cropRect = nil
+        removeCropButtons()
+        needsDisplay = true
+    }
+
+    private func removeCropButtons() {
+        cropConfirmButton?.removeFromSuperview(); cropConfirmButton = nil
+        cropCancelButton?.removeFromSuperview(); cropCancelButton = nil
+    }
+
+    private func confirmCrop() {
+        guard let rect = cropRect, rect.width >= 8, rect.height >= 8 else { return }
+        let confirmed = rect
+        endCrop()
+        onCropConfirmed?(confirmed)
+    }
+
+    private func clampToImage(_ p: CGPoint) -> CGPoint {
+        CGPoint(x: min(max(0, p.x), CGFloat(image.width)),
+                y: min(max(0, p.y), CGFloat(image.height)))
+    }
+
+    /// crop rect(이미지 픽셀 좌표)를 뷰 좌표로 변환한 우하단 근처에 ✓/✗ 버튼 배치
+    private func showCropButtons(for rect: CGRect) {
+        removeCropButtons()
+        let viewMaxX = fitOffset.x + rect.maxX * fitScale
+        let viewMinY = fitOffset.y + rect.minY * fitScale
+        let size: CGFloat = 28
+        let gap: CGFloat = 6
+
+        let confirm = NSButton(frame: CGRect(x: viewMaxX - size * 2 - gap,
+                                             y: viewMinY + gap, width: size, height: size))
+        confirm.bezelStyle = .circular
+        confirm.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "자르기 확정")
+        confirm.target = self
+        confirm.action = #selector(cropConfirmClicked)
+        confirm.toolTip = "자르기 (⏎)"
+
+        let cancel = NSButton(frame: CGRect(x: viewMaxX - size, y: viewMinY + gap,
+                                            width: size, height: size))
+        cancel.bezelStyle = .circular
+        cancel.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "자르기 취소")
+        cancel.target = self
+        cancel.action = #selector(cropCancelClicked)
+        cancel.toolTip = "취소 (esc)"
+
+        addSubview(confirm); addSubview(cancel)
+        cropConfirmButton = confirm; cropCancelButton = cancel
+    }
+
+    @objc private func cropConfirmClicked() { confirmCrop() }
+    @objc private func cropCancelClicked() { endCrop() }
 
     // MARK: - Text input
 
