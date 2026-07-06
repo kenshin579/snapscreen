@@ -27,6 +27,9 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     /// 확정된 crop 영역(이미지 픽셀 좌표)을 컨트롤러에 전달
     var onCropConfirmed: ((CGRect) -> Void)?
 
+    // 펜 자유곡선 그리기 중 누적 점열 (이미지 픽셀 좌표). nil이면 펜 드로잉 중 아님.
+    private var penPoints: [CGPoint]?
+
     /// 캡처 배율 기준 기본 크기 (Retina에서 주석이 너무 얇아지지 않게)
     private var defaultLineWidth: CGFloat { 3 * captureScale }
     private var defaultFontSize: CGFloat { 16 * captureScale }
@@ -156,6 +159,9 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
                                                   radius: badgeRadius),
                                  color: state.color, lineWidth: defaultLineWidth))
             needsDisplay = true
+        case .pen:
+            penPoints = [p]
+            draft = Annotation(kind: .path([p]), color: state.color, lineWidth: defaultLineWidth)
         default:
             dragMode = .drawing(start: p)
         }
@@ -167,6 +173,13 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             let p = clampToImage(imagePoint(from: event))
             cropRect = CGRect(x: min(start.x, p.x), y: min(start.y, p.y),
                               width: abs(start.x - p.x), height: abs(start.y - p.y))
+            needsDisplay = true
+            return
+        }
+        if penPoints != nil {
+            let p = imagePoint(from: event)
+            penPoints?.append(p)
+            if let pts = penPoints { draft?.kind = .path(pts) }
             needsDisplay = true
             return
         }
@@ -193,6 +206,13 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             } else {
                 cropRect = nil
             }
+            needsDisplay = true
+            return
+        }
+        if let pts = penPoints {
+            if pts.count >= 2, let draft { store.add(draft) }
+            penPoints = nil
+            draft = nil
             needsDisplay = true
             return
         }
@@ -223,7 +243,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         case .ellipse: kind = .ellipse(rect)
         case .pixelate: kind = .pixelate(rect)
         case .blur: kind = .blur(rect)
-        case .text, .stepBadge: kind = .rectangle(rect) // 도달하지 않음 (mouseDown에서 처리)
+        case .text, .stepBadge, .pen: kind = .rectangle(rect) // 도달하지 않음 (mouseDown에서 처리)
         }
         return Annotation(kind: kind, color: state.color, lineWidth: defaultLineWidth)
     }
@@ -257,7 +277,8 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             }
             let mapping: [String: EditorTool] = [
                 "a": .arrow, "r": .rectangle, "o": .ellipse,
-                "t": .text, "g": .blur, "b": .pixelate, "n": .stepBadge
+                "t": .text, "g": .blur, "b": .pixelate, "n": .stepBadge,
+                "p": .pen
             ]
             if let tool = mapping[char] {
                 state.tool = tool
