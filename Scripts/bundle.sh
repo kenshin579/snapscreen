@@ -22,6 +22,14 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 # 해법: 실체는 규약 위치인 Contents/Resources에 두어 codesign 대상이 되게 하고,
 # 서명이 끝난 뒤 루트에 상대 심링크를 만들어 accessor가 따라가게 한다.
 mkdir -p "$APP/Contents/Resources"
+
+# 앱 아이콘 (codesign 전에 배치해야 서명에 포함된다). 없으면 경고만 (아이콘 없이도 동작).
+if [ -f Resources/AppIcon.icns ]; then
+    cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+else
+    echo "WARN: Resources/AppIcon.icns 없음 — 기본 아이콘으로 빌드됩니다" >&2
+fi
+
 for bundle in ".build/$CONFIG"/*.bundle; do
     [ -e "$bundle" ] && cp -R "$bundle" "$APP/Contents/Resources/"
 done
