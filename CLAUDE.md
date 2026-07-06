@@ -16,6 +16,7 @@ swift test                           # 전체 테스트
 swift test --filter FileSaverTests   # 특정 테스트 클래스만
 Scripts/bundle.sh [debug|release]    # swift build + .app 번들 조립 + ad-hoc 서명 → build/SnapScreen.app
 Scripts/run.sh                       # bundle.sh 후 기존 인스턴스 종료(pkill) + 실행
+Scripts/make-icon.sh                 # AppIcon.svg → Resources/AppIcon.icns 재생성
 ```
 
 **캡처 동작 확인은 반드시 `Scripts/run.sh`로 실행하라.** `swift run`으로 실행하면 화면 기록 권한(TCC)이 앱이 아닌 터미널에 귀속되고, 번들 없이는 `UNUserNotificationCenter`가 크래시한다. ad-hoc 서명 특성상 코드가 바뀌면 cdhash가 달라져 화면 기록 권한을 시스템 설정에서 다시 켜야 할 수 있다 (중복 SnapScreen 항목은 수동 삭제).
@@ -34,6 +35,8 @@ Scripts/run.sh                       # bundle.sh 후 기존 인스턴스 종료(
 - **Updater/** — 인앱 업데이트. `UpdateChecker`(GitHub API+버전 비교, AppKit 비의존), `UpdateState`(공유 상태), `UpdateInstaller`(다운로드→번들 교체→재실행). 릴리스 zip 에셋 이름 규약 `SnapScreen-vX.Y.Z.zip`을 바꾸면 구버전 업데이터가 깨진다
 - **Home/** — 홈 창(`HomeView` 캡처 버튼 3개 + `HomeWindowController`). 앱 실행 시 자동 표시.
 - **Settings/**, **Support/** — 설정 저장·UI, 좌표 유틸·알림
+
+앱 아이콘은 `Resources/AppIcon.svg`가 소스이며, `Scripts/make-icon.sh`가 이를 iconset을 거쳐 `Resources/AppIcon.icns`로 만들고 `Scripts/bundle.sh`가 이 `.icns`를 번들에 복사한다 (ad-hoc 서명 이전 단계).
 
 **전체 흐름**: 전역 단축키 → `CaptureCoordinator.beginCapture(mode)` → (영역/창이면 오버레이로 선택) → `CaptureEngine` → `CaptureResult{image, scale}` → `handleCaptured`가 `EditorWindowController` 열기 → 사용자가 ⌘C(클립보드)/⌘S(저장).
 
