@@ -12,8 +12,8 @@ MVP 브레인스토밍 때 확정한 핵심 결정을 따른다: **주석이 하
 
 ## 2. 범위
 
-- 편집기 툴바에 crop 도구 추가 (단축키 `C`)
-- 주석이 있으면 도구 비활성 (툴팁 안내)
+- 편집기 툴바에 crop **버튼** 추가 (도구 세그먼트와 분리, 단축키 `C`)
+- 주석이 있으면 버튼 비활성 (툴팁 안내)
 - 드래그로 crop 영역 지정 → 선택 영역 근처에 확정(✓)/취소(✗) 버튼 + Enter/esc 단축
 - 확정 시 **같은 편집기 창에서 이미지 교체** + 창 크기 새 비율로 재조정, 이어서 주석 작업 가능
 - crop된 이미지가 저장/복사(flatten)에 반영
@@ -22,7 +22,8 @@ MVP 브레인스토밍 때 확정한 핵심 결정을 따른다: **주석이 하
 
 ## 3. UX (합의된 방향)
 
-- `.crop` 도구 선택 → crop 모드. 주석이 하나라도 있으면 툴바에서 비활성(회색 + 툴팁 "주석을 모두 삭제한 후 자를 수 있습니다"), `store.annotations.isEmpty`로 판정
+- 툴바의 crop **버튼**(도구 세그먼트와 분리된 별도 아이콘 버튼)을 누르면 crop 모드 진입. 주석이 하나라도 있으면 버튼 비활성(회색 + 툴팁 "주석을 모두 삭제한 후 자를 수 있습니다"), `store.annotations.isEmpty`로 판정
+- **왜 별도 버튼인가**: SwiftUI 세그먼트 Picker는 개별 세그먼트 비활성화가 불가능하다. crop은 성격도 다르므로(주석 아님·이미지 변경·주석 있을 때 비활성) 주석 도구 세그먼트에서 분리하는 것이 구현·의미 양쪽으로 맞다. crop은 `EditorTool` enum에 넣지 않는다
 - 드래그로 영역 지정: 선택 영역 밝게 + 나머지 어둡게(dimming, SelectionOverlay와 유사)
 - 드래그 완료 후 선택 영역 우하단 근처에 확정(✓)/취소(✗) 버튼 2개를 `CanvasView` 서브뷰(NSButton)로 표시, 드래그 갱신 시 위치 이동
 - Enter = 확정, esc = 취소(파워유저 단축), 마우스로는 버튼 클릭
@@ -33,12 +34,14 @@ MVP 브레인스토밍 때 확정한 핵심 결정을 따른다: **주석이 하
 | 파일 | 책임 | AppKit |
 |---|---|---|
 | `Editor/ImageCropper.swift` (신규) | `crop(_ image:toBottomLeftRect:) -> CGImage?` 순수 함수 — 좌표 변환 + cropping + 경계 클램프 | 비의존 (단위 테스트 대상) |
-| `Editor/EditorState.swift` (수정) | `EditorTool.crop` 케이스 추가 | - |
-| `Editor/CanvasView.swift` (수정) | crop 모드 상태(`cropRect`), 드래그, dimming 렌더, ✓/✗ 서브뷰 버튼, Enter/esc, 확정 콜백 | 의존 |
-| `Editor/EditorWindowController.swift` (수정) | 현재 이미지 단일 소스(`var image`), crop 확정 시 이미지 교체 + 창 리사이즈 + 캔버스 갱신 | 의존 |
-| `Editor/ToolbarView.swift` (수정) | crop 도구 세그먼트, 주석 있으면 비활성 | 의존 |
+| `Editor/AnnotationStore.swift` (수정) | `ObservableObject`로 전환, `annotations`를 `@Published private(set)` — ToolbarView가 crop 버튼 비활성을 실시간 반영하도록 | 비의존 (Combine) |
+| `Editor/CanvasView.swift` (수정) | `image`를 `var`로 + `replaceImage(_:)`, crop 모드 상태(`cropRect`), `beginCrop()`, 드래그, dimming 렌더, ✓/✗ 서브뷰 버튼, Enter/esc, 확정 콜백(`onCropConfirmed`), 단축키 `C` | 의존 |
+| `Editor/EditorWindowController.swift` (수정) | 현재 이미지 단일 소스(`var image`), crop 버튼→`beginCrop()` 연결, 확정 콜백→이미지 교체 + 창 리사이즈 + 캔버스 갱신 | 의존 |
+| `Editor/ToolbarView.swift` (수정) | 도구 세그먼트와 별개로 crop **버튼** 추가(`store` 주입, `.disabled(!store.annotations.isEmpty)`, `onCrop` 클로저) | 의존 |
 
-**crop은 주석이 아니다:** `AnnotationKind`에 넣지 않고 CanvasView의 별도 crop 모드 상태로 관리. 주석과 공존하지 않으므로(비활성 조건) 벡터 모델과 분리.
+**crop은 주석도 도구(EditorTool)도 아니다:** `AnnotationKind`에도 `EditorTool`에도 넣지 않고 CanvasView의 별도 crop 모드 상태로 관리. 주석과 공존하지 않으므로(비활성 조건) 벡터 모델·도구 팔레트와 분리.
+
+**AnnotationStore 관찰 가능화:** crop 버튼의 실시간 비활성(주석 추가/삭제/undo에 즉시 반영)을 위해 `AnnotationStore`를 `ObservableObject`로 만들고 `annotations`를 `@Published private(set)`로 노출한다. 기존 add/remove/translate/undo/redo는 `annotations` 대입이라 자동 발화. CanvasView(NSView)는 여전히 `needsDisplay` 수동 갱신(관찰 안 함), ToolbarView(SwiftUI)만 관찰. 단위 테스트는 읽기 인터페이스가 동일해 영향 없음(필요 시 `@MainActor` 표기만 조정).
 
 ## 5. crop 실행 (좌표 함정)
 
