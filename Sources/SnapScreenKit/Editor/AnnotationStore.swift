@@ -1,8 +1,9 @@
 import Foundation
 import CoreGraphics
+import Combine
 
-public final class AnnotationStore {
-    public private(set) var annotations: [Annotation] = []
+public final class AnnotationStore: ObservableObject {
+    @Published public private(set) var annotations: [Annotation] = []
     private var undoStack: [[Annotation]] = []
     private var redoStack: [[Annotation]] = []
 
