@@ -29,7 +29,7 @@ Scripts/run.sh                       # bundle.sh 후 기존 인스턴스 종료(
 - **AppCore/** — `AppDelegate`, `StatusItemController`(메뉴바), `Hotkeys`(KeyboardShortcuts 패키지, ⌘⇧1/2/0), `CaptureCoordinator`(중앙 오케스트레이터), `MainMenuBuilder`, `ActivationPolicyManager`(아래 활성화 정책 참조)
 - **CaptureKit/** — `CaptureEngine`(ScreenCaptureKit `SCScreenshotManager` 래퍼), `ScreenCapturePermission`(TCC preflight)
 - **SelectionOverlay/** — 영역 드래그 선택(`SelectionOverlayController`), 창 클릭 선택(`WindowPickerController`). 디스플레이마다 borderless NSPanel 1개
-- **Editor/** — 주석 편집기. 데이터 계층(`Annotation`/`AnnotationStore`/`AnnotationHitTester`)은 **AppKit 비의존**, UI 계층(`CanvasView`/`EditorWindowController`/`ToolbarView`)과 분리
+- **Editor/** — 주석 편집기. 데이터 계층(`Annotation`/`AnnotationStore`/`AnnotationHitTester`)은 **AppKit 비의존**, UI 계층(`CanvasView`/`EditorWindowController`/`ToolbarView`)과 분리. crop은 주석/도구가 아닌 CanvasView의 별도 모드다. `ImageCropper`(순수 함수)가 좌하단→좌상단 좌표 변환 후 자르며, 확정 시 EditorWindowController가 이미지를 교체하고 창을 리사이즈한다. crop 버튼 비활성을 위해 `AnnotationStore`는 `ObservableObject`다.
 - **Output/** — PNG 인코딩(DPI 메타), 클립보드(PNG+TIFF 동시 선언), 파일 저장(위치 결정/충돌 회피/Desktop 폴백)
 - **Updater/** — 인앱 업데이트. `UpdateChecker`(GitHub API+버전 비교, AppKit 비의존), `UpdateState`(공유 상태), `UpdateInstaller`(다운로드→번들 교체→재실행). 릴리스 zip 에셋 이름 규약 `SnapScreen-vX.Y.Z.zip`을 바꾸면 구버전 업데이터가 깨진다
 - **Home/** — 홈 창(`HomeView` 캡처 버튼 3개 + `HomeWindowController`). 앱 실행 시 자동 표시.

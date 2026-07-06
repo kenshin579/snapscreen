@@ -1,20 +1,24 @@
 import AppKit
+import Combine
 import SwiftUI
 
 @MainActor
 public final class EditorWindowController: NSWindowController, NSWindowDelegate {
     private let result: CaptureResult
+    private var image: CGImage
     private let settings: SettingsStore
     private let store = AnnotationStore()
     private let state = EditorState()
     private var canvas: CanvasView!
     private var onClose: (() -> Void)?
     private let policyManager: ActivationPolicyManager?
+    private var toolCancellable: AnyCancellable?
 
     public init(result: CaptureResult, settings: SettingsStore,
                 policyManager: ActivationPolicyManager? = nil,
                 onClose: (() -> Void)? = nil) {
         self.result = result
+        self.image = result.image
         self.settings = settings
         self.policyManager = policyManager
         self.onClose = onClose
@@ -40,10 +44,15 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         window.contentAspectRatio = .zero // 툴바 포함이라 비율 고정 해제
         window.minSize = NSSize(width: 320, height: 44 + 120) // 툴바 압착 방지
 
-        canvas = CanvasView(image: result.image, captureScale: result.scale,
+        canvas = CanvasView(image: self.image, captureScale: result.scale,
                             store: store, state: state)
+        canvas.onCropConfirmed = { [weak self] rect in
+            self?.applyCrop(rect)
+        }
         let toolbar = NSHostingView(rootView: ToolbarView(
             state: state,
+            store: store,
+            onCrop: { [weak self] in self?.canvas.beginCrop() },
             onUndo: { [weak self] in self?.undoAction(nil) },
             onRedo: { [weak self] in self?.redoAction(nil) },
             onCopy: { [weak self] in self?.copyMerged(nil) },
@@ -73,6 +82,11 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         window.makeFirstResponder(canvas)
         policyManager?.register(window)
         NSApp.activate(ignoringOtherApps: true)
+
+        // 도구 전환(단축키/툴바 세그먼트) 시 진행 중인 crop을 자동 취소해 상태 불일치 방지
+        toolCancellable = state.$tool.sink { [weak self] _ in
+            self?.canvas.cancelCropIfActive()
+        }
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -84,7 +98,30 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     }
 
     private func flattened() -> CGImage? {
-        FlattenRenderer.flatten(image: result.image, annotations: store.annotations, scale: result.scale)
+        FlattenRenderer.flatten(image: image, annotations: store.annotations, scale: result.scale)
+    }
+
+    private func applyCrop(_ rect: CGRect) {
+        // nil = 빈/무효 선택 → crop 취소, 원본·창 크기 보존
+        guard let cropped = ImageCropper.crop(image, toBottomLeftRect: rect) else { return }
+        image = cropped
+        canvas.replaceImage(cropped)
+        resizeWindowToImage()
+    }
+
+    /// 현재 이미지 비율에 맞게 창 content 크기 재조정 (init 사이징 규칙과 동일)
+    private func resizeWindowToImage() {
+        guard let window else { return }
+        let pointSize = CGSize(width: CGFloat(image.width) / result.scale,
+                               height: CGFloat(image.height) / result.scale)
+        let maxSize = NSScreen.main.map { CGSize(width: $0.visibleFrame.width * 0.8,
+                                                 height: $0.visibleFrame.height * 0.8) }
+            ?? CGSize(width: 1200, height: 800)
+        let fit = min(1, maxSize.width / pointSize.width, maxSize.height / pointSize.height)
+        let contentSize = CGSize(width: pointSize.width * fit, height: pointSize.height * fit)
+        let toolbarHeight: CGFloat = 44
+        window.setContentSize(CGSize(width: contentSize.width,
+                                     height: contentSize.height + toolbarHeight))
     }
 
     // MARK: - 메인 메뉴 액션 (MainMenuBuilder의 nil-target 셀렉터가 응답 체인으로 도달)
