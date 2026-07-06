@@ -324,22 +324,41 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
 
         let confirm = NSButton(frame: CGRect(x: viewMaxX - size * 2 - gap,
                                              y: viewMinY + gap, width: size, height: size))
-        confirm.bezelStyle = .circular
         confirm.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "자르기 확정")
         confirm.target = self
         confirm.action = #selector(cropConfirmClicked)
         confirm.toolTip = "자르기 (⏎)"
+        styleCropButton(confirm, background: .systemGreen)
 
         let cancel = NSButton(frame: CGRect(x: viewMaxX - size, y: viewMinY + gap,
                                             width: size, height: size))
-        cancel.bezelStyle = .circular
         cancel.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "자르기 취소")
         cancel.target = self
         cancel.action = #selector(cropCancelClicked)
         cancel.toolTip = "취소 (esc)"
+        styleCropButton(cancel, background: .systemRed)
 
         addSubview(confirm); addSubview(cancel)
         cropConfirmButton = confirm; cropCancelButton = cancel
+    }
+
+    /// 흰/어두운 배경 어디서든 대비를 확보하도록 원형 색 배경 + 흰 심볼 + 그림자를 입힌다.
+    /// (`.circular` bezelStyle은 배경색 지정이 안 먹어 레이어로 직접 그린다)
+    private func styleCropButton(_ button: NSButton, background: NSColor) {
+        button.isBordered = false
+        button.bezelStyle = .regularSquare
+        button.title = ""
+        button.contentTintColor = .white
+        button.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .bold)
+        button.wantsLayer = true
+        guard let layer = button.layer else { return }
+        layer.backgroundColor = background.cgColor
+        layer.cornerRadius = button.frame.height / 2
+        layer.shadowColor = NSColor.black.cgColor
+        layer.shadowOpacity = 0.35
+        layer.shadowRadius = 3
+        layer.shadowOffset = CGSize(width: 0, height: -1)
+        layer.masksToBounds = false
     }
 
     @objc private func cropConfirmClicked() { confirmCrop() }
