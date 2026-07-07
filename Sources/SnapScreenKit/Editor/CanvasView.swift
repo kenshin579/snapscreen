@@ -28,6 +28,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     var onCropConfirmed: ((CGRect) -> Void)?
     /// 단축키 E로 OCR을 요청 (이미지 소유는 컨트롤러라 위임)
     var onRequestOCR: (() -> Void)?
+    private var toast: ToastView?
 
     // 펜 자유곡선 그리기 중 누적 점열 (이미지 픽셀 좌표). nil이면 펜 드로잉 중 아님.
     private var penPoints: [CGPoint]?
@@ -315,6 +316,36 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     /// crop 모드 중 도구가 전환된 경우 등, 활성 상태일 때만 crop을 취소
     func cancelCropIfActive() {
         if isCropping { endCrop() }
+    }
+
+    /// 캔버스 하단 중앙에 잠깐 토스트를 표시한다 (복사/OCR 피드백). 알림 권한과 무관하게 항상 보인다.
+    func showToast(_ message: String) {
+        toast?.removeFromSuperview()
+        let t = ToastView(message: message)
+        t.translatesAutoresizingMaskIntoConstraints = false
+        t.alphaValue = 0
+        addSubview(t)
+        NSLayoutConstraint.activate([
+            t.centerXAnchor.constraint(equalTo: centerXAnchor),
+            t.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -24)
+        ])
+        toast = t
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.15
+            t.animator().alphaValue = 1
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self, weak t] in
+            guard let t, t.superview != nil else { return }
+            NSAnimationContext.runAnimationGroup({ ctx in
+                ctx.duration = 0.3
+                t.animator().alphaValue = 0
+            }, completionHandler: {
+                MainActor.assumeIsolated {
+                    t.removeFromSuperview()
+                    if self?.toast === t { self?.toast = nil }
+                }
+            })
+        }
     }
 
     private func endCrop() {
