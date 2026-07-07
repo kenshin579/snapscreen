@@ -13,6 +13,7 @@ public enum AnnotationKind: Equatable {
     case pixelate(CGRect)
     case blur(CGRect)
     case stepBadge(center: CGPoint, number: Int, radius: CGFloat)
+    case path([CGPoint])
 
     public func translated(by d: CGVector) -> AnnotationKind {
         switch self {
@@ -27,6 +28,8 @@ public enum AnnotationKind: Equatable {
         case .blur(let r): return .blur(r.offsetBy(dx: d.dx, dy: d.dy))
         case .stepBadge(let c, let n, let r):
             return .stepBadge(center: CGPoint(x: c.x + d.dx, y: c.y + d.dy), number: n, radius: r)
+        case .path(let pts):
+            return .path(pts.map { CGPoint(x: $0.x + d.dx, y: $0.y + d.dy) })
         }
     }
 
@@ -46,6 +49,14 @@ public enum AnnotationKind: Equatable {
             return CGRect(x: o.x, y: o.y, width: width, height: f * 1.3)
         case .stepBadge(let c, _, let r):
             return CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2)
+        case .path(let pts):
+            guard let first = pts.first else { return .zero }
+            var minX = first.x, minY = first.y, maxX = first.x, maxY = first.y
+            for p in pts.dropFirst() {
+                minX = min(minX, p.x); minY = min(minY, p.y)
+                maxX = max(maxX, p.x); maxY = max(maxY, p.y)
+            }
+            return CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY)
         }
     }
 }

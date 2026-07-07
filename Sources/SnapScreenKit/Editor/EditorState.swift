@@ -1,7 +1,7 @@
 import Foundation
 
 public enum EditorTool: String, CaseIterable, Identifiable {
-    case arrow, rectangle, ellipse, text, blur, pixelate, stepBadge
+    case arrow, rectangle, ellipse, text, blur, pixelate, stepBadge, pen
     public var id: String { rawValue }
 
     public var label: String {
@@ -13,6 +13,7 @@ public enum EditorTool: String, CaseIterable, Identifiable {
         case .blur: return "블러 (시각적 완화용 — 민감정보는 모자이크 사용)"
         case .pixelate: return "모자이크 (민감정보 가리기)"
         case .stepBadge: return "번호"
+        case .pen: return "펜"
         }
     }
 
@@ -25,6 +26,7 @@ public enum EditorTool: String, CaseIterable, Identifiable {
         case .blur: return "drop.halffull"
         case .pixelate: return "mosaic"
         case .stepBadge: return "1.circle"
+        case .pen: return "scribble"
         }
     }
 }

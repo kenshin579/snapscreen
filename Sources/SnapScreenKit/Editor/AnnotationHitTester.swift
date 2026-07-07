@@ -22,6 +22,15 @@ public enum AnnotationHitTester {
             return a.kind.bounds.insetBy(dx: -tol, dy: -tol).contains(p)
         case .stepBadge(let c, _, let r):
             return hypot(p.x - c.x, p.y - c.y) <= r + tol
+        case .path(let pts):
+            guard pts.count >= 2 else {
+                if let only = pts.first { return hypot(p.x - only.x, p.y - only.y) <= tol }
+                return false
+            }
+            for i in 0..<(pts.count - 1) {
+                if distanceToSegment(p, pts[i], pts[i + 1]) <= tol { return true }
+            }
+            return false
         }
     }
 

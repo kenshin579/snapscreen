@@ -62,6 +62,13 @@ public enum AnnotationRenderer {
         case .stepBadge(let center, let number, let radius):
             drawBadge(number: number, center: center, radius: radius,
                       color: annotation.color.nsColor, in: ctx)
+        case .path(let points):
+            ctx.setStrokeColor(color)
+            ctx.setLineWidth(annotation.lineWidth)
+            ctx.setLineCap(.round)
+            ctx.setLineJoin(.round)
+            ctx.addPath(PathSmoother.smoothedPath(points))
+            ctx.strokePath()
         }
     }
 
