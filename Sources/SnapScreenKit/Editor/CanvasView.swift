@@ -296,6 +296,9 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         commitTextFieldIfNeeded()
         // 미커밋 텍스트가 방금 주석으로 커밋됐을 수 있으므로 재검증 — 주석이 있으면 crop 진입 안 함
         guard store.annotations.isEmpty else { return }
+        // 진행 중이던 펜 획(미확정 draft)이 있으면 버린다 — crop 딤 위 유령 획 잔상 방지
+        penPoints = nil
+        draft = nil
         selectedID = nil
         isCropping = true
         cropStart = nil
