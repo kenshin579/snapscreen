@@ -131,7 +131,9 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
 
     @objc public func copyMerged(_ sender: Any?) {
         guard let image = flattened() else { return }
-        ClipboardWriter.write(image, scale: result.scale)
+        if ClipboardWriter.write(image, scale: result.scale) {
+            canvas.showToast("이미지를 복사했습니다")
+        }
     }
 
     @objc public func saveImage(_ sender: Any?) {
@@ -156,10 +158,10 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
             self.isRecognizing = false
             switch result {
             case .success(let text) where text.isEmpty:
-                Notifier.show(title: "텍스트 없음", body: "이미지에서 인식된 텍스트가 없습니다")
+                self.canvas.showToast("인식된 텍스트가 없습니다")
             case .success(let text):
                 ClipboardWriter.write(text: text)
-                Notifier.show(title: "텍스트 복사됨", body: "\(text.count)자를 클립보드에 복사했습니다")
+                self.canvas.showToast("\(text.count)자를 복사했습니다")
             case .failure(let error):
                 Notifier.alertFailure(title: "OCR 실패", body: error.localizedDescription)
             }
