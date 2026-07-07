@@ -13,6 +13,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     private var onClose: (() -> Void)?
     private let policyManager: ActivationPolicyManager?
     private var toolCancellable: AnyCancellable?
+    private var isRecognizing = false
 
     public init(result: CaptureResult, settings: SettingsStore,
                 policyManager: ActivationPolicyManager? = nil,
@@ -147,8 +148,12 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     }
 
     @objc public func performOCR() {
+        // 연속 실행(E 키 반복 등) 중 인식 중첩 방지 — 중복 클립보드 기록/알림 회피
+        guard !isRecognizing else { return }
+        isRecognizing = true
         TextRecognizer.recognize(image) { [weak self] result in
-            guard self != nil else { return }
+            guard let self else { return }
+            self.isRecognizing = false
             switch result {
             case .success(let text) where text.isEmpty:
                 Notifier.show(title: "텍스트 없음", body: "이미지에서 인식된 텍스트가 없습니다")

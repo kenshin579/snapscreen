@@ -284,7 +284,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             ]
             if let tool = mapping[char] {
                 state.tool = tool
-            } else if char == "e" {
+            } else if char == "e", !isCropping {
                 onRequestOCR?()
             } else if char == "c", store.annotations.isEmpty {
                 beginCrop()
