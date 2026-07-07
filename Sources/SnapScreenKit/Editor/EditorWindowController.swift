@@ -13,6 +13,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     private var onClose: (() -> Void)?
     private let policyManager: ActivationPolicyManager?
     private var toolCancellable: AnyCancellable?
+    private var isRecognizing = false
 
     public init(result: CaptureResult, settings: SettingsStore,
                 policyManager: ActivationPolicyManager? = nil,
@@ -49,10 +50,12 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         canvas.onCropConfirmed = { [weak self] rect in
             self?.applyCrop(rect)
         }
+        canvas.onRequestOCR = { [weak self] in self?.performOCR() }
         let toolbar = NSHostingView(rootView: ToolbarView(
             state: state,
             store: store,
             onCrop: { [weak self] in self?.canvas.beginCrop() },
+            onOCR: { [weak self] in self?.performOCR() },
             onUndo: { [weak self] in self?.undoAction(nil) },
             onRedo: { [weak self] in self?.redoAction(nil) },
             onCopy: { [weak self] in self?.copyMerged(nil) },
@@ -141,6 +144,25 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
             window?.close()
         case .failed(let error):
             Notifier.alertFailure(title: "저장 실패", body: error.localizedDescription)
+        }
+    }
+
+    @objc public func performOCR() {
+        // 연속 실행(E 키 반복 등) 중 인식 중첩 방지 — 중복 클립보드 기록/알림 회피
+        guard !isRecognizing else { return }
+        isRecognizing = true
+        TextRecognizer.recognize(image) { [weak self] result in
+            guard let self else { return }
+            self.isRecognizing = false
+            switch result {
+            case .success(let text) where text.isEmpty:
+                Notifier.show(title: "텍스트 없음", body: "이미지에서 인식된 텍스트가 없습니다")
+            case .success(let text):
+                ClipboardWriter.write(text: text)
+                Notifier.show(title: "텍스트 복사됨", body: "\(text.count)자를 클립보드에 복사했습니다")
+            case .failure(let error):
+                Notifier.alertFailure(title: "OCR 실패", body: error.localizedDescription)
+            }
         }
     }
 

@@ -5,6 +5,7 @@ public struct ToolbarView: View {
     @ObservedObject var state: EditorState
     @ObservedObject var store: AnnotationStore
     let onCrop: () -> Void
+    let onOCR: () -> Void
     let onUndo: () -> Void
     let onRedo: () -> Void
     let onCopy: () -> Void
@@ -12,11 +13,13 @@ public struct ToolbarView: View {
 
     public init(state: EditorState, store: AnnotationStore,
                 onCrop: @escaping () -> Void,
+                onOCR: @escaping () -> Void,
                 onUndo: @escaping () -> Void, onRedo: @escaping () -> Void,
                 onCopy: @escaping () -> Void, onSave: @escaping () -> Void) {
         self.state = state
         self.store = store
         self.onCrop = onCrop
+        self.onOCR = onOCR
         self.onUndo = onUndo
         self.onRedo = onRedo
         self.onCopy = onCopy
@@ -41,6 +44,11 @@ public struct ToolbarView: View {
                 .help(store.annotations.isEmpty
                       ? "자르기 (C)" : "주석을 모두 삭제한 후 자를 수 있습니다")
                 .disabled(!store.annotations.isEmpty)
+
+            Divider().frame(height: 20)
+
+            Button(action: onOCR) { Image(systemName: "text.viewfinder") }
+                .help("텍스트 추출 (E)")
 
             Divider().frame(height: 20)
 
