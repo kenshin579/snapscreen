@@ -49,10 +49,12 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         canvas.onCropConfirmed = { [weak self] rect in
             self?.applyCrop(rect)
         }
+        canvas.onRequestOCR = { [weak self] in self?.performOCR() }
         let toolbar = NSHostingView(rootView: ToolbarView(
             state: state,
             store: store,
             onCrop: { [weak self] in self?.canvas.beginCrop() },
+            onOCR: { [weak self] in self?.performOCR() },
             onUndo: { [weak self] in self?.undoAction(nil) },
             onRedo: { [weak self] in self?.redoAction(nil) },
             onCopy: { [weak self] in self?.copyMerged(nil) },
@@ -141,6 +143,21 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
             window?.close()
         case .failed(let error):
             Notifier.alertFailure(title: "저장 실패", body: error.localizedDescription)
+        }
+    }
+
+    @objc public func performOCR() {
+        TextRecognizer.recognize(image) { [weak self] result in
+            guard self != nil else { return }
+            switch result {
+            case .success(let text) where text.isEmpty:
+                Notifier.show(title: "텍스트 없음", body: "이미지에서 인식된 텍스트가 없습니다")
+            case .success(let text):
+                ClipboardWriter.write(text: text)
+                Notifier.show(title: "텍스트 복사됨", body: "\(text.count)자를 클립보드에 복사했습니다")
+            case .failure(let error):
+                Notifier.alertFailure(title: "OCR 실패", body: error.localizedDescription)
+            }
         }
     }
 

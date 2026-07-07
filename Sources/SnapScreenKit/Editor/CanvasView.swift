@@ -26,6 +26,8 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     private var cropCancelButton: NSButton?
     /// 확정된 crop 영역(이미지 픽셀 좌표)을 컨트롤러에 전달
     var onCropConfirmed: ((CGRect) -> Void)?
+    /// 단축키 E로 OCR을 요청 (이미지 소유는 컨트롤러라 위임)
+    var onRequestOCR: (() -> Void)?
 
     // 펜 자유곡선 그리기 중 누적 점열 (이미지 픽셀 좌표). nil이면 펜 드로잉 중 아님.
     private var penPoints: [CGPoint]?
@@ -282,6 +284,8 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             ]
             if let tool = mapping[char] {
                 state.tool = tool
+            } else if char == "e" {
+                onRequestOCR?()
             } else if char == "c", store.annotations.isEmpty {
                 beginCrop()
             } else {
