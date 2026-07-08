@@ -91,6 +91,8 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
             self?.canvas.cancelCropIfActive()
             self?.canvas.cancelEraseIfActive()
             self?.canvas.needsDisplay = true
+            // 지우개 진입/이탈 시 커서(지우개 아이콘 ↔ 기본) 갱신
+            if let canvas = self?.canvas { canvas.window?.invalidateCursorRects(for: canvas) }
         }
     }
 

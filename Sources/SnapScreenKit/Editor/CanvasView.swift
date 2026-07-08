@@ -36,10 +36,17 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     // 지우개: 드래그 중 지우개 중심 누적(이미지 픽셀). nil이면 지우개 드래그 중 아님.
     private var eraseCenters: [CGPoint]?
     private var erasePreview: [Annotation] = []
-    // 지우개 원형 커서 위치(이미지 픽셀). nil이면 미표시.
-    private var eraserCursor: CGPoint?
     /// 뷰 기준 지름 24pt → 이미지 픽셀 반경
     private var eraserRadiusInImage: CGFloat { 12 / fitScale }
+
+    /// 지우개 도구용 시스템 커서 — 원 대신 지우개 아이콘이며, 시스템이 드래그 중에도 마우스를 따라 이동시킨다.
+    private lazy var eraserNSCursor: NSCursor = {
+        let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .regular)
+        let image = NSImage(systemSymbolName: "eraser.fill", accessibilityDescription: "지우개")?
+            .withSymbolConfiguration(config) ?? NSImage()
+        return NSCursor(image: image,
+                        hotSpot: NSPoint(x: image.size.width / 2, y: image.size.height / 2))
+    }()
 
     /// 캡처 배율 기준 기본 크기 (Retina에서 주석이 너무 얇아지지 않게)
     private var defaultLineWidth: CGFloat { 3 * captureScale }
@@ -169,12 +176,6 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             } else {
                 ctx.fill(imageRect)
             }
-        }
-        if state.tool == .eraser, !isCropping, let c = eraserCursor {
-            let r = eraserRadiusInImage
-            ctx.setStrokeColor(NSColor.gray.withAlphaComponent(0.85).cgColor)
-            ctx.setLineWidth(1 / fitScale)
-            ctx.strokeEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
         }
     }
 
@@ -308,22 +309,11 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         needsDisplay = true
     }
 
-    public override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        for area in trackingAreas { removeTrackingArea(area) }
-        addTrackingArea(NSTrackingArea(
-            rect: bounds,
-            options: [.mouseMoved, .activeInKeyWindow, .inVisibleRect],
-            owner: self, userInfo: nil))
-    }
-
-    public override func mouseMoved(with event: NSEvent) {
-        guard state.tool == .eraser else {
-            if eraserCursor != nil { eraserCursor = nil; needsDisplay = true }
-            return
+    public override func resetCursorRects() {
+        super.resetCursorRects()
+        if state.tool == .eraser {
+            addCursorRect(bounds, cursor: eraserNSCursor)
         }
-        eraserCursor = imagePoint(from: event)
-        needsDisplay = true
     }
 
     private func makeDraft(from start: CGPoint, to p: CGPoint) -> Annotation {
