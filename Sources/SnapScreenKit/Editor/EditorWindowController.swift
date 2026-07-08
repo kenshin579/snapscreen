@@ -89,6 +89,8 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         // 도구 전환(단축키/툴바 세그먼트) 시 진행 중인 crop을 자동 취소해 상태 불일치 방지
         toolCancellable = state.$tool.sink { [weak self] _ in
             self?.canvas.cancelCropIfActive()
+            self?.canvas.cancelEraseIfActive()
+            self?.canvas.needsDisplay = true
         }
     }
 
