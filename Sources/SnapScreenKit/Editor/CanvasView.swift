@@ -39,13 +39,33 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     /// 뷰 기준 지름 24pt → 이미지 픽셀 반경
     private var eraserRadiusInImage: CGFloat { 12 / fitScale }
 
-    /// 지우개 도구용 시스템 커서 — 원 대신 지우개 아이콘이며, 시스템이 드래그 중에도 마우스를 따라 이동시킨다.
+    /// 지우개 도구용 시스템 커서 — 흰색 몸통 + 검정 외곽선이라 밝은/어두운 배경 모두에서 보인다.
+    /// 시스템 커서라 드래그 중에도 마우스를 따라 이동한다.
     private lazy var eraserNSCursor: NSCursor = {
-        let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .regular)
-        let image = NSImage(systemSymbolName: "eraser.fill", accessibilityDescription: "지우개")?
-            .withSymbolConfiguration(config) ?? NSImage()
-        return NSCursor(image: image,
-                        hotSpot: NSPoint(x: image.size.width / 2, y: image.size.height / 2))
+        let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .bold)
+        guard let symbol = NSImage(systemSymbolName: "eraser.fill", accessibilityDescription: "지우개")?
+            .withSymbolConfiguration(config) else {
+            return .arrow
+        }
+        let outline: CGFloat = 1.5           // 외곽선 두께
+        let pad = outline + 1
+        let size = NSSize(width: symbol.size.width + pad * 2,
+                          height: symbol.size.height + pad * 2)
+        let center = NSRect(x: pad, y: pad, width: symbol.size.width, height: symbol.size.height)
+
+        let image = NSImage(size: size)
+        image.lockFocus()
+        // 검정 외곽선: 심볼(흰/검 틴트)을 여러 방향으로 오프셋해 검정으로 깔고 그 위에 흰색
+        let black = symbol.tinted(with: .black)
+        for angle in stride(from: 0.0, to: 2 * Double.pi, by: Double.pi / 4) {
+            let dx = CGFloat(cos(angle)) * outline
+            let dy = CGFloat(sin(angle)) * outline
+            black.draw(in: center.offsetBy(dx: dx, dy: dy))
+        }
+        symbol.tinted(with: .white).draw(in: center)
+        image.unlockFocus()
+
+        return NSCursor(image: image, hotSpot: NSPoint(x: size.width / 2, y: size.height / 2))
     }()
 
     /// 캡처 배율 기준 기본 크기 (Retina에서 주석이 너무 얇아지지 않게)
@@ -556,5 +576,19 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         }
         window?.makeFirstResponder(self)
         needsDisplay = true
+    }
+}
+
+private extension NSImage {
+    /// 템플릿 이미지를 단색으로 틴트한 새 이미지. (지우개 커서의 흰/검 레이어 생성용)
+    func tinted(with color: NSColor) -> NSImage {
+        let result = NSImage(size: size)
+        result.lockFocus()
+        color.set()
+        let rect = NSRect(origin: .zero, size: size)
+        draw(in: rect)
+        rect.fill(using: .sourceIn)
+        result.unlockFocus()
+        return result
     }
 }
