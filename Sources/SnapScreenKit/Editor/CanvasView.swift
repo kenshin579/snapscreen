@@ -170,7 +170,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
                 ctx.fill(imageRect)
             }
         }
-        if state.tool == .eraser, let c = eraserCursor {
+        if state.tool == .eraser, !isCropping, let c = eraserCursor {
             let r = eraserRadiusInImage
             ctx.setStrokeColor(NSColor.gray.withAlphaComponent(0.85).cgColor)
             ctx.setLineWidth(1 / fitScale)
@@ -285,6 +285,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             if erasePreview != store.annotations {
                 store.replace(with: erasePreview)
             }
+            selectedID = nil // 지운 주석이 선택돼 있었을 수 있어 정리
             eraseCenters = nil
             erasePreview = []
             needsDisplay = true
