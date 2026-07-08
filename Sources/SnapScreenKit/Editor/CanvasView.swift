@@ -33,6 +33,14 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     // 펜 자유곡선 그리기 중 누적 점열 (이미지 픽셀 좌표). nil이면 펜 드로잉 중 아님.
     private var penPoints: [CGPoint]?
 
+    // 지우개: 드래그 중 지우개 중심 누적(이미지 픽셀). nil이면 지우개 드래그 중 아님.
+    private var eraseCenters: [CGPoint]?
+    private var erasePreview: [Annotation] = []
+    // 지우개 원형 커서 위치(이미지 픽셀). nil이면 미표시.
+    private var eraserCursor: CGPoint?
+    /// 뷰 기준 지름 24pt → 이미지 픽셀 반경
+    private var eraserRadiusInImage: CGFloat { 12 / fitScale }
+
     /// 캡처 배율 기준 기본 크기 (Retina에서 주석이 너무 얇아지지 않게)
     private var defaultLineWidth: CGFloat { 3 * captureScale }
     private var defaultFontSize: CGFloat { 16 * captureScale }
@@ -73,6 +81,40 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         needsDisplay = true
     }
 
+    /// store.annotations에 지우개 중심들을 적용한 결과. 펜 획은 조각 분할, 그 외는 반경 히트 시 통째 제거.
+    /// 변경 없는 획은 원본(UUID) 유지 → 호출부의 "변경 없음" 판정 가능.
+    private func erasedAnnotations(centers: [CGPoint]) -> [Annotation] {
+        let r = eraserRadiusInImage
+        var result: [Annotation] = []
+        for a in store.annotations {
+            if case .path(let pts) = a.kind {
+                let segments = PathEraser.erase(pts, along: centers, radius: r)
+                if segments.count == 1, segments[0] == pts {
+                    result.append(a)
+                } else {
+                    for seg in segments {
+                        result.append(Annotation(kind: .path(seg), color: a.color, lineWidth: a.lineWidth))
+                    }
+                }
+            } else {
+                let hit = centers.contains {
+                    AnnotationHitTester.hitTest($0, annotations: [a], tolerance: r) != nil
+                }
+                if !hit { result.append(a) }
+            }
+        }
+        return result
+    }
+
+    /// 도구 전환 등으로 진행 중 지우개 취소(미리보기 폐기, store 미변경).
+    func cancelEraseIfActive() {
+        if eraseCenters != nil {
+            eraseCenters = nil
+            erasePreview = []
+            needsDisplay = true
+        }
+    }
+
     public override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
         NSColor.windowBackgroundColor.setFill()
@@ -82,7 +124,8 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         ctx.scaleBy(x: fitScale, y: fitScale)
         ctx.interpolationQuality = .high
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
-        for annotation in store.annotations {
+        let toRender = (eraseCenters != nil) ? erasePreview : store.annotations
+        for annotation in toRender {
             if case .moving(let id, _, let total) = dragMode, annotation.id == id {
                 var moved = annotation
                 moved.kind = annotation.kind.translated(by: total)
@@ -127,6 +170,12 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
                 ctx.fill(imageRect)
             }
         }
+        if state.tool == .eraser, !isCropping, let c = eraserCursor {
+            let r = eraserRadiusInImage
+            ctx.setStrokeColor(NSColor.gray.withAlphaComponent(0.85).cgColor)
+            ctx.setLineWidth(1 / fitScale)
+            ctx.strokeEllipse(in: CGRect(x: c.x - r, y: c.y - r, width: r * 2, height: r * 2))
+        }
     }
 
     // MARK: - Mouse
@@ -138,6 +187,12 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             cropStart = clampToImage(p)
             cropRect = nil
             removeCropButtons()
+            needsDisplay = true
+            return
+        }
+        if state.tool == .eraser {
+            eraseCenters = [p]
+            erasePreview = erasedAnnotations(centers: [p])
             needsDisplay = true
             return
         }
@@ -186,6 +241,13 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             needsDisplay = true
             return
         }
+        if eraseCenters != nil {
+            let p = imagePoint(from: event)
+            eraseCenters?.append(p)
+            erasePreview = erasedAnnotations(centers: eraseCenters!)
+            needsDisplay = true
+            return
+        }
         let p = imagePoint(from: event)
         switch dragMode {
         case .drawing(let start):
@@ -219,6 +281,16 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             needsDisplay = true
             return
         }
+        if eraseCenters != nil {
+            if erasePreview != store.annotations {
+                store.replace(with: erasePreview)
+            }
+            selectedID = nil // 지운 주석이 선택돼 있었을 수 있어 정리
+            eraseCenters = nil
+            erasePreview = []
+            needsDisplay = true
+            return
+        }
         switch dragMode {
         case .drawing:
             if let draft, draft.kind.bounds.width >= 3 || draft.kind.bounds.height >= 3 {
@@ -236,6 +308,24 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         needsDisplay = true
     }
 
+    public override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.mouseMoved, .activeInKeyWindow, .inVisibleRect],
+            owner: self, userInfo: nil))
+    }
+
+    public override func mouseMoved(with event: NSEvent) {
+        guard state.tool == .eraser else {
+            if eraserCursor != nil { eraserCursor = nil; needsDisplay = true }
+            return
+        }
+        eraserCursor = imagePoint(from: event)
+        needsDisplay = true
+    }
+
     private func makeDraft(from start: CGPoint, to p: CGPoint) -> Annotation {
         let rect = CGRect(x: min(start.x, p.x), y: min(start.y, p.y),
                           width: abs(start.x - p.x), height: abs(start.y - p.y))
@@ -246,7 +336,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         case .ellipse: kind = .ellipse(rect)
         case .pixelate: kind = .pixelate(rect)
         case .blur: kind = .blur(rect)
-        case .text, .stepBadge, .pen: kind = .rectangle(rect) // 도달하지 않음 (mouseDown에서 처리)
+        case .text, .stepBadge, .pen, .eraser: kind = .rectangle(rect) // 도달하지 않음 (mouseDown에서 처리)
         }
         return Annotation(kind: kind, color: state.color, lineWidth: defaultLineWidth)
     }
@@ -281,7 +371,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
             let mapping: [String: EditorTool] = [
                 "a": .arrow, "r": .rectangle, "o": .ellipse,
                 "t": .text, "g": .blur, "b": .pixelate, "n": .stepBadge,
-                "p": .pen
+                "p": .pen, "x": .eraser
             ]
             if let tool = mapping[char] {
                 state.tool = tool
