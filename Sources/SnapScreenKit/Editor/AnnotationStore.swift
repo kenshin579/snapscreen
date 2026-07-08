@@ -29,6 +29,12 @@ public final class AnnotationStore: ObservableObject {
         annotations[i].kind = annotations[i].kind.translated(by: delta)
     }
 
+    /// 여러 주석을 한 번에 교체 (지우개 등 배치 변경). undo 1회로 복원된다.
+    public func replace(with newAnnotations: [Annotation]) {
+        snapshot()
+        annotations = newAnnotations
+    }
+
     public func undo() {
         guard let prev = undoStack.popLast() else { return }
         redoStack.append(annotations)
