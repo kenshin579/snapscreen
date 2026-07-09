@@ -12,7 +12,9 @@ public final class HistoryStore: ObservableObject {
     public init(directory: URL, limit: Int = 50) {
         self.archive = HistoryArchive(directory: directory)
         self.limit = limit
-        entries = archive.loadIndex().sorted { $0.date > $1.date }
+        let loaded = archive.loadIndex().sorted { $0.date > $1.date }
+        entries = loaded
+        archive.sweepOrphans(keeping: Set(loaded.map(\.id)))
     }
 
     public func add(image: CGImage, scale: CGFloat, id: UUID = UUID(), date: Date = Date()) {

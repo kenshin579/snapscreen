@@ -53,6 +53,21 @@ struct HistoryArchive: Sendable {
         try? FileManager.default.removeItem(at: thumbURL(id))
     }
 
+    /// index에 등재되지 않은 고아 png/thumb 파일을 삭제한다.
+    /// (add 도중 크래시로 파일만 남고 index에 못 들어간 잔존물이 상한 없이 쌓이는 것을 방지)
+    func sweepOrphans(keeping ids: Set<UUID>) {
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: directory, includingPropertiesForKeys: nil) else { return }
+        for url in files where url.lastPathComponent.hasSuffix(".png") {
+            let base = url.lastPathComponent
+                .replacingOccurrences(of: ".thumb.png", with: "")
+                .replacingOccurrences(of: ".png", with: "")
+            if let id = UUID(uuidString: base), !ids.contains(id) {
+                try? FileManager.default.removeItem(at: url)
+            }
+        }
+    }
+
     static func thumbnailPNG(from pngData: Data, maxPixel: CGFloat) -> Data? {
         guard let src = CGImageSourceCreateWithData(pngData as CFData, nil) else { return nil }
         let opts: [CFString: Any] = [

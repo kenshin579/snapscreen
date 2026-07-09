@@ -32,6 +32,17 @@ final class HistoryArchiveTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: archive.thumbURL(id).path))
     }
 
+    func testSweepOrphansRemovesUnindexedFiles() throws {
+        let archive = HistoryArchive(directory: dir)
+        let keep = UUID(), orphan = UUID()
+        _ = try archive.write(image: solidImage(), scale: 1, id: keep, date: Date())
+        _ = try archive.write(image: solidImage(), scale: 1, id: orphan, date: Date())
+        archive.sweepOrphans(keeping: [keep])
+        XCTAssertTrue(FileManager.default.fileExists(atPath: archive.pngURL(keep).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: archive.pngURL(orphan).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: archive.thumbURL(orphan).path))
+    }
+
     func testLoadImageRoundTrips() throws {
         let archive = HistoryArchive(directory: dir)
         let id = UUID()
