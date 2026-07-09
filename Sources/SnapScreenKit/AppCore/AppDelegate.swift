@@ -23,7 +23,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
 
         homeWindowController = HomeWindowController(
             policyManager: activationPolicyManager,
-            onCapture: { [weak coordinator] mode in coordinator?.beginCapture(mode) })
+            history: historyStore,
+            onCapture: { [weak coordinator] mode in coordinator?.beginCapture(mode) },
+            onOpenEntry: { [weak coordinator, weak self] entry in
+                guard let coordinator, let self else { return }
+                if let image = self.historyStore.loadImage(id: entry.id) {
+                    coordinator.openFromHistory(image: image, scale: entry.scale)
+                } else {
+                    Notifier.show(title: "열 수 없음", body: "원본 파일을 찾지 못했습니다")
+                    self.historyStore.remove(id: entry.id)
+                }
+            })
         homeWindowController?.show()
 
         statusItemController = StatusItemController(

@@ -7,9 +7,12 @@ public final class HomeWindowController: NSWindowController, NSWindowDelegate {
     private let policyManager: ActivationPolicyManager
 
     public init(policyManager: ActivationPolicyManager,
-                onCapture: @escaping @MainActor (CaptureMode) -> Void) {
+                history: HistoryStore,
+                onCapture: @escaping @MainActor (CaptureMode) -> Void,
+                onOpenEntry: @escaping @MainActor (HistoryEntry) -> Void) {
         self.policyManager = policyManager
-        let hosting = NSHostingController(rootView: HomeView(onCapture: onCapture))
+        let hosting = NSHostingController(rootView: HomeView(
+            onCapture: onCapture, history: history, onOpenEntry: onOpenEntry))
         let window = NSWindow(contentViewController: hosting)
         window.title = "SnapScreen"
         window.styleMask = [.titled, .closable, .miniaturizable] // 리사이즈 불가
