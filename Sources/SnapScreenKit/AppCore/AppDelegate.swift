@@ -7,6 +7,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsController: SettingsWindowController?
     private let activationPolicyManager = ActivationPolicyManager()
     private var homeWindowController: HomeWindowController?
+    private var historyStore: HistoryStore!
     public private(set) var updateState = UpdateState()
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
@@ -14,9 +15,25 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         coordinator = CaptureCoordinator()
         coordinator.policyManager = activationPolicyManager
 
+        let historyDir = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("SnapScreen/History", isDirectory: true)
+        historyStore = HistoryStore(directory: historyDir)
+        coordinator.historyStore = historyStore
+
         homeWindowController = HomeWindowController(
             policyManager: activationPolicyManager,
-            onCapture: { [weak coordinator] mode in coordinator?.beginCapture(mode) })
+            history: historyStore,
+            onCapture: { [weak coordinator] mode in coordinator?.beginCapture(mode) },
+            onOpenEntry: { [weak coordinator, weak self] entry in
+                guard let coordinator, let self else { return }
+                if let image = self.historyStore.loadImage(id: entry.id) {
+                    coordinator.openFromHistory(image: image, scale: entry.scale)
+                } else {
+                    Notifier.show(title: "열 수 없음", body: "원본 파일을 찾지 못했습니다")
+                    self.historyStore.remove(id: entry.id)
+                }
+            })
         homeWindowController?.show()
 
         statusItemController = StatusItemController(
