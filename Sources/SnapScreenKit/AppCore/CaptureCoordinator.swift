@@ -13,6 +13,7 @@ public final class CaptureCoordinator {
     private var isPickingWindow = false
     private var editors: [EditorWindowController] = []
     public var policyManager: ActivationPolicyManager?
+    public var historyStore: HistoryStore?
 
     public init() {
         settings.load()
@@ -85,6 +86,16 @@ public final class CaptureCoordinator {
     }
 
     func handleCaptured(_ result: CaptureResult) {
+        openEditor(result)
+        historyStore?.add(image: result.image, scale: result.scale)
+    }
+
+    /// 히스토리 항목을 편집기로 다시 연다(재기록 없음).
+    public func openFromHistory(image: CGImage, scale: CGFloat) {
+        openEditor(CaptureResult(image: image, scale: scale))
+    }
+
+    private func openEditor(_ result: CaptureResult) {
         // controller가 onClose 클로저를 통해 자신을 보유하는 순환은
         // windowWillClose에서 onClose = nil로 끊긴다
         var controller: EditorWindowController?

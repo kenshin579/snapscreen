@@ -7,12 +7,19 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsController: SettingsWindowController?
     private let activationPolicyManager = ActivationPolicyManager()
     private var homeWindowController: HomeWindowController?
+    private var historyStore: HistoryStore!
     public private(set) var updateState = UpdateState()
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         MainMenuBuilder.install()
         coordinator = CaptureCoordinator()
         coordinator.policyManager = activationPolicyManager
+
+        let historyDir = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("SnapScreen/History", isDirectory: true)
+        historyStore = HistoryStore(directory: historyDir)
+        coordinator.historyStore = historyStore
 
         homeWindowController = HomeWindowController(
             policyManager: activationPolicyManager,
