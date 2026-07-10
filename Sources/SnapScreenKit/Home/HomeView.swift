@@ -28,6 +28,7 @@ public struct HomeView: View {
     ]
     // 현재 왼쪽(leading)에 정렬된 항목 id. 트랙패드·화살표 스크롤 모두 반영(.scrollPosition).
     @State private var leadingID: UUID?
+    @State private var hoveredID: UUID?
     @State private var viewportWidth: CGFloat = 0
     private let itemStride: CGFloat = 130 // 썸네일 120 + 간격 10
 
@@ -140,23 +141,39 @@ public struct HomeView: View {
     @ViewBuilder
     private func thumbnail(_ entry: HistoryEntry) -> some View {
         let image = NSImage(contentsOf: history.thumbnailURL(id: entry.id))
-        Button { onOpenEntry(entry) } label: {
-            Group {
-                if let image {
-                    Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
-                } else {
-                    Image(systemName: "photo").foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        ZStack(alignment: .topTrailing) {
+            Button { onOpenEntry(entry) } label: {
+                Group {
+                    if let image {
+                        Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
+                    } else {
+                        Image(systemName: "photo").foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 }
+                .frame(width: 120, height: 78)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.12)))
             }
-            .frame(width: 120, height: 78)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.12)))
+            .buttonStyle(.plain)
+
+            if hoveredID == entry.id {
+                Button { history.remove(id: entry.id) } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 18, height: 18)
+                        .background(Circle().fill(Color.black.opacity(0.6)))
+                }
+                .buttonStyle(.plain)
+                .padding(4)
+                .help("삭제")
+            }
         }
-        .buttonStyle(.plain)
         .help(entry.date.formatted(date: .abbreviated, time: .shortened))
-        .contextMenu {
-            Button("삭제", role: .destructive) { history.remove(id: entry.id) }
+        .onHover { hovering in
+            if hovering { hoveredID = entry.id }
+            else if hoveredID == entry.id { hoveredID = nil }
         }
     }
 }
