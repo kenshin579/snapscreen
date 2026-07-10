@@ -26,7 +26,6 @@ public struct HomeView: View {
         Item(mode: .window, symbol: "macwindow", title: "창", shortcutName: .captureWindow),
         Item(mode: .fullScreen, symbol: "display", title: "전체 화면", shortcutName: .captureFullScreen)
     ]
-    private let columns = [GridItem(.adaptive(minimum: 116), spacing: 10)]
 
     public var body: some View {
         VStack(spacing: 18) {
@@ -61,17 +60,17 @@ public struct HomeView: View {
             if history.entries.isEmpty {
                 Text("아직 캡처가 없습니다")
                     .font(.system(size: 12)).foregroundStyle(.tertiary)
-                    .frame(maxWidth: .infinity, minHeight: 120)
+                    .frame(maxWidth: .infinity, minHeight: 78, maxHeight: 78)
             } else {
-                ScrollView {
-                    LazyVGrid(columns: columns, spacing: 10) {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 10) {
                         ForEach(history.entries) { entry in
                             thumbnail(entry)
                         }
                     }
                     .padding(.vertical, 2)
                 }
-                .frame(height: 260)
+                .frame(height: 86)
             }
 
             HStack {
@@ -97,8 +96,7 @@ public struct HomeView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .frame(height: 78)
-            .frame(maxWidth: .infinity)
+            .frame(width: 120, height: 78)
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.12)))
         }
