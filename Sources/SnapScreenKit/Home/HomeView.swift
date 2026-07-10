@@ -26,15 +26,21 @@ public struct HomeView: View {
         Item(mode: .window, symbol: "macwindow", title: "창", shortcutName: .captureWindow),
         Item(mode: .fullScreen, symbol: "display", title: "전체 화면", shortcutName: .captureFullScreen)
     ]
-    @State private var scrollOffset: CGFloat = 0
+    // 현재 왼쪽(leading)에 정렬된 항목 id. 트랙패드·화살표 스크롤 모두 반영(.scrollPosition).
+    @State private var leadingID: UUID?
     @State private var viewportWidth: CGFloat = 0
     private let itemStride: CGFloat = 130 // 썸네일 120 + 간격 10
 
-    private var contentWidth: CGFloat {
-        max(0, CGFloat(history.entries.count) * itemStride - 10)
+    /// 한 화면(뷰포트)에 들어가는 썸네일 수
+    private var perPage: Int { max(1, Int(viewportWidth / itemStride)) }
+    /// 현재 왼쪽 항목의 인덱스 (없으면 맨 앞으로 간주)
+    private var currentLeadingIndex: Int {
+        guard let id = leadingID,
+              let i = history.entries.firstIndex(where: { $0.id == id }) else { return 0 }
+        return i
     }
-    private var canScrollLeft: Bool { scrollOffset > 2 }
-    private var canScrollRight: Bool { scrollOffset < contentWidth - viewportWidth - 2 }
+    private var canScrollLeft: Bool { currentLeadingIndex > 0 }
+    private var canScrollRight: Bool { currentLeadingIndex + perPage < history.entries.count }
 
     public var body: some View {
         VStack(spacing: 18) {
@@ -87,32 +93,26 @@ public struct HomeView: View {
 
     @ViewBuilder
     private var capturesScroller: some View {
-        ScrollViewReader { proxy in
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 10) {
-                    ForEach(history.entries) { entry in
-                        thumbnail(entry)
-                    }
+        ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(spacing: 10) {
+                ForEach(history.entries) { entry in
+                    thumbnail(entry)
                 }
-                .padding(.vertical, 2)
-                .background(GeometryReader { geo in
-                    Color.clear.preference(key: ScrollOffsetKey.self,
-                                           value: -geo.frame(in: .named("hscroll")).minX)
-                })
             }
-            .coordinateSpace(name: "hscroll")
-            .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
-            .background(GeometryReader { geo in
-                Color.clear
-                    .onAppear { viewportWidth = geo.size.width }
-                    .onChange(of: geo.size.width) { viewportWidth = geo.size.width }
-            })
-            .overlay(alignment: .leading) {
-                if canScrollLeft { arrow("chevron.left") { scrollBy(-1, proxy: proxy) } }
-            }
-            .overlay(alignment: .trailing) {
-                if canScrollRight { arrow("chevron.right") { scrollBy(1, proxy: proxy) } }
-            }
+            .padding(.vertical, 2)
+            .scrollTargetLayout()
+        }
+        .scrollPosition(id: $leadingID, anchor: .leading)
+        .background(GeometryReader { geo in
+            Color.clear
+                .onAppear { viewportWidth = geo.size.width }
+                .onChange(of: geo.size.width) { viewportWidth = geo.size.width }
+        })
+        .overlay(alignment: .leading) {
+            if canScrollLeft { arrow("chevron.left") { scrollBy(-1) } }
+        }
+        .overlay(alignment: .trailing) {
+            if canScrollRight { arrow("chevron.right") { scrollBy(1) } }
         }
         .frame(height: 86)
     }
@@ -129,13 +129,12 @@ public struct HomeView: View {
         .padding(.horizontal, 4)
     }
 
-    /// direction: -1 왼쪽 / +1 오른쪽. 한 뷰포트만큼 근접 항목으로 스크롤한다.
-    private func scrollBy(_ direction: Int, proxy: ScrollViewProxy) {
+    /// direction: -1 왼쪽 / +1 오른쪽. 한 뷰포트만큼 이동(leading 항목 id를 바꿔 스크롤).
+    private func scrollBy(_ direction: Int) {
         guard !history.entries.isEmpty else { return }
-        let perPage = max(1, Int(viewportWidth / itemStride))
-        let currentLeading = Int((scrollOffset / itemStride).rounded())
-        let target = min(max(currentLeading + direction * perPage, 0), history.entries.count - 1)
-        withAnimation { proxy.scrollTo(history.entries[target].id, anchor: .leading) }
+        let target = min(max(currentLeadingIndex + direction * perPage, 0),
+                         history.entries.count - 1)
+        withAnimation { leadingID = history.entries[target].id }
     }
 
     @ViewBuilder
@@ -159,12 +158,5 @@ public struct HomeView: View {
         .contextMenu {
             Button("삭제", role: .destructive) { history.remove(id: entry.id) }
         }
-    }
-}
-
-private struct ScrollOffsetKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
     }
 }
