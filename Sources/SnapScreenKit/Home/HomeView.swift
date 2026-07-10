@@ -26,6 +26,15 @@ public struct HomeView: View {
         Item(mode: .window, symbol: "macwindow", title: "창", shortcutName: .captureWindow),
         Item(mode: .fullScreen, symbol: "display", title: "전체 화면", shortcutName: .captureFullScreen)
     ]
+    @State private var scrollOffset: CGFloat = 0
+    @State private var viewportWidth: CGFloat = 0
+    private let itemStride: CGFloat = 130 // 썸네일 120 + 간격 10
+
+    private var contentWidth: CGFloat {
+        max(0, CGFloat(history.entries.count) * itemStride - 10)
+    }
+    private var canScrollLeft: Bool { scrollOffset > 2 }
+    private var canScrollRight: Bool { scrollOffset < contentWidth - viewportWidth - 2 }
 
     public var body: some View {
         VStack(spacing: 18) {
@@ -62,15 +71,7 @@ public struct HomeView: View {
                     .font(.system(size: 12)).foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, minHeight: 78, maxHeight: 78)
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 10) {
-                        ForEach(history.entries) { entry in
-                            thumbnail(entry)
-                        }
-                    }
-                    .padding(.vertical, 2)
-                }
-                .frame(height: 86)
+                capturesScroller
             }
 
             HStack {
@@ -82,6 +83,59 @@ public struct HomeView: View {
         }
         .padding(22)
         .frame(width: 420)
+    }
+
+    @ViewBuilder
+    private var capturesScroller: some View {
+        ScrollViewReader { proxy in
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(spacing: 10) {
+                    ForEach(history.entries) { entry in
+                        thumbnail(entry)
+                    }
+                }
+                .padding(.vertical, 2)
+                .background(GeometryReader { geo in
+                    Color.clear.preference(key: ScrollOffsetKey.self,
+                                           value: -geo.frame(in: .named("hscroll")).minX)
+                })
+            }
+            .coordinateSpace(name: "hscroll")
+            .onPreferenceChange(ScrollOffsetKey.self) { scrollOffset = $0 }
+            .background(GeometryReader { geo in
+                Color.clear
+                    .onAppear { viewportWidth = geo.size.width }
+                    .onChange(of: geo.size.width) { viewportWidth = geo.size.width }
+            })
+            .overlay(alignment: .leading) {
+                if canScrollLeft { arrow("chevron.left") { scrollBy(-1, proxy: proxy) } }
+            }
+            .overlay(alignment: .trailing) {
+                if canScrollRight { arrow("chevron.right") { scrollBy(1, proxy: proxy) } }
+            }
+        }
+        .frame(height: 86)
+    }
+
+    private func arrow(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(.white)
+                .frame(width: 26, height: 26)
+                .background(Circle().fill(Color.black.opacity(0.55)))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 4)
+    }
+
+    /// direction: -1 왼쪽 / +1 오른쪽. 한 뷰포트만큼 근접 항목으로 스크롤한다.
+    private func scrollBy(_ direction: Int, proxy: ScrollViewProxy) {
+        guard !history.entries.isEmpty else { return }
+        let perPage = max(1, Int(viewportWidth / itemStride))
+        let currentLeading = Int((scrollOffset / itemStride).rounded())
+        let target = min(max(currentLeading + direction * perPage, 0), history.entries.count - 1)
+        withAnimation { proxy.scrollTo(history.entries[target].id, anchor: .leading) }
     }
 
     @ViewBuilder
@@ -105,5 +159,12 @@ public struct HomeView: View {
         .contextMenu {
             Button("삭제", role: .destructive) { history.remove(id: entry.id) }
         }
+    }
+}
+
+private struct ScrollOffsetKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
