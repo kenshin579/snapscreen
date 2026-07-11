@@ -32,6 +32,11 @@ public struct SettingsView: View {
                 }
                 TextField("파일명 접두어:", text: $settings.filenamePrefix)
             }
+            Section("히스토리") {
+                Picker("보관 개수", selection: $settings.historyLimit) {
+                    ForEach([20, 50, 100, 200], id: \.self) { Text("\($0)개").tag($0) }
+                }
+            }
             Section("정보") {
                 LabeledContent("버전", value: AppInfo.version)
                 HStack {

@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -8,6 +9,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     private let activationPolicyManager = ActivationPolicyManager()
     private var homeWindowController: HomeWindowController?
     private var historyStore: HistoryStore!
+    private var historyLimitCancellable: AnyCancellable?
     public private(set) var updateState = UpdateState()
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
@@ -18,8 +20,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         let historyDir = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("SnapScreen/History", isDirectory: true)
-        historyStore = HistoryStore(directory: historyDir)
+        historyStore = HistoryStore(directory: historyDir, limit: coordinator.settings.historyLimit)
         coordinator.historyStore = historyStore
+        historyLimitCancellable = coordinator.settings.$historyLimit.sink { [weak historyStore] limit in
+            historyStore?.updateLimit(limit)
+        }
 
         homeWindowController = HomeWindowController(
             policyManager: activationPolicyManager,

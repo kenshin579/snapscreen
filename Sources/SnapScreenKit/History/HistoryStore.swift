@@ -7,7 +7,7 @@ import CoreGraphics
 public final class HistoryStore: ObservableObject {
     @Published public private(set) var entries: [HistoryEntry] = []
     private let archive: HistoryArchive
-    private let limit: Int
+    private var limit: Int
 
     public init(directory: URL, limit: Int = 50) {
         self.archive = HistoryArchive(directory: directory)
@@ -42,6 +42,23 @@ public final class HistoryStore: ObservableObject {
     public func remove(id: UUID) {
         entries.removeAll { $0.id == id }
         archive.delete(id: id)
+        archive.writeIndex(entries)
+    }
+
+    /// 히스토리 전체 삭제 (파일 + 메타)
+    public func clear() {
+        for entry in entries { archive.delete(id: entry.id) }
+        entries = []
+        archive.writeIndex(entries)
+    }
+
+    /// 보관 개수 변경. 줄이면 초과분(오래된 것부터)을 즉시 삭제한다.
+    public func updateLimit(_ newLimit: Int) {
+        limit = newLimit
+        while entries.count > limit {
+            let removed = entries.removeLast()
+            archive.delete(id: removed.id)
+        }
         archive.writeIndex(entries)
     }
 }

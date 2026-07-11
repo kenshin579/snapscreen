@@ -29,6 +29,7 @@ public struct HomeView: View {
     // 현재 왼쪽(leading)에 정렬된 항목 id. 트랙패드·화살표 스크롤 모두 반영(.scrollPosition).
     @State private var leadingID: UUID?
     @State private var hoveredID: UUID?
+    @State private var showClearConfirm = false
     @State private var viewportWidth: CGFloat = 0
     private let itemStride: CGFloat = 130 // 썸네일 120 + 간격 10
 
@@ -71,6 +72,17 @@ public struct HomeView: View {
             HStack {
                 Text("최근 캡처").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
                 Spacer()
+                if !history.entries.isEmpty {
+                    Button("모두 지우기") { showClearConfirm = true }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .confirmationDialog("최근 캡처를 모두 지울까요?",
+                                isPresented: $showClearConfirm, titleVisibility: .visible) {
+                Button("모두 지우기", role: .destructive) { history.clear() }
+                Button("취소", role: .cancel) {}
             }
 
             if history.entries.isEmpty {
