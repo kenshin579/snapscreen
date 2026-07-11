@@ -1,4 +1,4 @@
 public enum AppInfo {
-    public static let version = "0.12.1"
+    public static let version = "0.13.0"
     public static let bundleID = "cc.snapscreen.SnapScreen"
 }
