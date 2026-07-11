@@ -1,4 +1,5 @@
 import Foundation
+import CoreGraphics
 
 public enum EditorTool: String, CaseIterable, Identifiable {
     case arrow, rectangle, ellipse, text, blur, pixelate, stepBadge, pen, eraser
@@ -37,5 +38,7 @@ public enum EditorTool: String, CaseIterable, Identifiable {
 public final class EditorState: ObservableObject {
     @Published public var tool: EditorTool = .arrow
     @Published public var color: PaletteColor = .red
+    @Published public var lineWidth: CGFloat = 3       // 인스펙터 슬라이더 (points, pre-scale)
+    @Published public var shadowEnabled: Bool = true   // 인스펙터 토글
     public init() {}
 }
