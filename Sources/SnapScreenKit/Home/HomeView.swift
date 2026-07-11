@@ -1,18 +1,21 @@
 import SwiftUI
 import KeyboardShortcuts
 
-/// 홈 창 내용: 캡처 버튼 3개 + 최근 캡처 그리드 + 하단 버전.
+/// 홈 창 내용: 인라인 타이틀 + 캡처 타일 3개 + 최근 캡처 그리드 + 푸터(설정 기어/버전).
 public struct HomeView: View {
     let onCapture: @MainActor (CaptureMode) -> Void
     @ObservedObject var history: HistoryStore
     let onOpenEntry: @MainActor (HistoryEntry) -> Void
+    let onOpenSettings: @MainActor () -> Void
 
     public init(onCapture: @escaping @MainActor (CaptureMode) -> Void,
                 history: HistoryStore,
-                onOpenEntry: @escaping @MainActor (HistoryEntry) -> Void) {
+                onOpenEntry: @escaping @MainActor (HistoryEntry) -> Void,
+                onOpenSettings: @escaping @MainActor () -> Void) {
         self.onCapture = onCapture
         self.history = history
         self.onOpenEntry = onOpenEntry
+        self.onOpenSettings = onOpenSettings
     }
 
     private struct Item {
@@ -45,25 +48,15 @@ public struct HomeView: View {
     private var canScrollRight: Bool { currentLeadingIndex + perPage < history.entries.count }
 
     public var body: some View {
-        VStack(spacing: 18) {
-            HStack(spacing: 12) {
+        VStack(spacing: 16) {
+            // 인라인 타이틀 — 트래픽 라이트 행 높이만큼(28pt) 상단 영역 확보, 중앙 정렬
+            Text("SnapScreen")
+                .font(DesignTokens.Typography.windowTitle)
+                .frame(maxWidth: .infinity, minHeight: 28)
+
+            HStack(spacing: 10) {
                 ForEach(items, id: \.symbol) { item in
-                    Button { onCapture(item.mode) } label: {
-                        VStack(spacing: 8) {
-                            Image(systemName: item.symbol).font(.system(size: 28))
-                            Text(item.title).font(.system(size: 13, weight: .semibold))
-                            Text(KeyboardShortcuts.getShortcut(for: item.shortcutName)?.description ?? "미설정")
-                                .font(.system(size: 11, design: .monospaced))
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 18)
-                    }
-                    .buttonStyle(.plain)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.06)))
-                    .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.12)))
-                    .accessibilityLabel(item.title)
-                    .accessibilityHint("스크린샷을 캡처합니다")
+                    captureTile(item)
                 }
             }
 
@@ -93,16 +86,54 @@ public struct HomeView: View {
                 capturesScroller
             }
 
-            HStack {
-                Spacer()
-                Text("v\(AppInfo.version)")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.tertiary)
+            footer
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 16)
+        .frame(width: 440)
+        .background(
+            LinearGradient(colors: [DesignTokens.Colors.homeBackgroundTop,
+                                    DesignTokens.Colors.homeBackgroundBottom],
+                           startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+        )
+    }
+
+    // MARK: - 캡처 타일
+
+    @ViewBuilder
+    private func captureTile(_ item: Item) -> some View {
+        Button { onCapture(item.mode) } label: {
+            VStack(spacing: 8) {
+                Image(systemName: item.symbol)
+                    .font(.system(size: 26))
+                    .foregroundStyle(DesignTokens.Colors.accentIconTint)
+                Text(item.title).font(.system(size: 13, weight: .semibold))
+                shortcutView(item.shortcutName)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.top, 18)
+            .padding(.bottom, 14)
+        }
+        .buttonStyle(CaptureTileButtonStyle())
+        .accessibilityLabel(item.title)
+        .accessibilityHint("스크린샷을 캡처합니다")
+    }
+
+    /// 단축키 표시: 설정돼 있으면 개별 키캡 칩, 미설정이면 "미설정" 텍스트.
+    @ViewBuilder
+    private func shortcutView(_ name: KeyboardShortcuts.Name) -> some View {
+        let keys = ShortcutKeycaps.decompose(KeyboardShortcuts.getShortcut(for: name))
+        if keys.isEmpty {
+            Text("미설정").font(.system(size: 11)).foregroundStyle(.tertiary)
+        } else {
+            HStack(spacing: 3) {
+                ForEach(keys, id: \.self) { KeycapChip($0) }
             }
         }
-        .padding(22)
-        .frame(width: 420)
     }
+
+    // MARK: - 최근 캡처
 
     @ViewBuilder
     private var capturesScroller: some View {
@@ -164,8 +195,9 @@ public struct HomeView: View {
                     }
                 }
                 .frame(width: 120, height: 78)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(Color.primary.opacity(0.12)))
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.thumb))
+                .overlay(RoundedRectangle(cornerRadius: DesignTokens.Radius.thumb)
+                    .strokeBorder(DesignTokens.Colors.hairline))
             }
             .buttonStyle(.plain)
 
@@ -175,7 +207,7 @@ public struct HomeView: View {
                         .font(.system(size: 9, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(width: 18, height: 18)
-                        .background(Circle().fill(Color.black.opacity(0.6)))
+                        .background(Circle().fill(DesignTokens.Colors.thumbDeleteButtonBackground))
                 }
                 .buttonStyle(.plain)
                 .padding(4)
@@ -186,6 +218,56 @@ public struct HomeView: View {
         .onHover { hovering in
             if hovering { hoveredID = entry.id }
             else if hoveredID == entry.id { hoveredID = nil }
+        }
+    }
+
+    // MARK: - 푸터
+
+    private var footer: some View {
+        HStack {
+            Button { onOpenSettings() } label: {
+                Image(systemName: "gearshape").font(.system(size: 15))
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.tertiary)
+            .help("설정 열기")
+
+            Spacer()
+
+            Text("v\(AppInfo.version)")
+                .font(DesignTokens.Typography.mono)
+                .foregroundStyle(.tertiary)
+        }
+    }
+}
+
+/// 캡처 타일 버튼 스타일: 토큰 배경 + 내부 상단 하이라이트 + 1px 테두리, hover 시 밝게·press 시 축소.
+private struct CaptureTileButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        TileBody(configuration: configuration)
+    }
+
+    private struct TileBody: View {
+        let configuration: ButtonStyleConfiguration
+        @State private var hovering = false
+
+        var body: some View {
+            configuration.label
+                .background(DesignTokens.Colors.tileFill)
+                .overlay(alignment: .top) {
+                    // 내부 상단 하이라이트 1px (라운드 클립 안쪽)
+                    DesignTokens.Colors.tileTopHighlight.frame(height: 1)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Radius.tile))
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignTokens.Radius.tile)
+                        .strokeBorder(DesignTokens.Colors.tileBorder, lineWidth: 1)
+                )
+                .brightness(hovering ? 0.03 : 0)
+                .scaleEffect(configuration.isPressed ? 0.98 : 1)
+                .onHover { hovering = $0 }
+                .animation(.easeOut(duration: 0.12), value: hovering)
+                .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
         }
     }
 }
