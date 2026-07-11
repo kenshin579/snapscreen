@@ -39,6 +39,8 @@ public struct InspectorView: View {
                 Text("그림자").font(.system(size: 12))
                 Spacer()
                 Toggle("", isOn: $state.shadowEnabled).labelsHidden()
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
             }
 
             Divider()
