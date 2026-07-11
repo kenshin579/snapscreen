@@ -45,7 +45,9 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         window.isReleasedWhenClosed = false
         super.init(window: window)
 
-        window.setContentSize(CGSize(width: canvasSize.width + chrome, height: canvasSize.height))
+        // 콘텐츠 하한: 좁은/얇은 캡처도 레일(약 412pt)·최소 캔버스가 잘리지 않게 (캔버스는 레터박스 처리됨)
+        window.setContentSize(CGSize(width: max(canvasSize.width, 240) + chrome,
+                                     height: max(canvasSize.height, 420)))
         window.contentAspectRatio = .zero
         // 높이 하한: 도구 레일 최소 콘텐츠(약 412pt) + 타이틀바 여유 — 레일 버튼 잘림 방지
         window.minSize = NSSize(width: chrome + 240, height: 460)
@@ -147,7 +149,8 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         let chrome = railWidth + inspectorWidth
         let fit = min(1, (maxSize.width - chrome) / pointSize.width, maxSize.height / pointSize.height)
         let canvasSize = CGSize(width: pointSize.width * fit, height: pointSize.height * fit)
-        window.setContentSize(CGSize(width: canvasSize.width + chrome, height: canvasSize.height))
+        window.setContentSize(CGSize(width: max(canvasSize.width, 240) + chrome,
+                                     height: max(canvasSize.height, 420)))
     }
 
     // MARK: - 메인 메뉴 액션 (MainMenuBuilder의 nil-target 셀렉터가 응답 체인으로 도달)
