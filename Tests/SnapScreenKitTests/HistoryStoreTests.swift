@@ -54,6 +54,44 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertTrue(reloaded.entries.isEmpty)
     }
 
+    func testClearRemovesAllAndPersists() async throws {
+        let store = HistoryStore(directory: dir, limit: 50)
+        store.add(image: solidImage(), scale: 1, id: UUID(), date: Date())
+        store.add(image: solidImage(), scale: 1, id: UUID(), date: Date())
+        try await waitUntil { store.entries.count == 2 }
+
+        store.clear()
+        XCTAssertTrue(store.entries.isEmpty)
+        let reloaded = HistoryStore(directory: dir, limit: 50)
+        XCTAssertTrue(reloaded.entries.isEmpty)
+    }
+
+    func testUpdateLimitTrimsOldest() async throws {
+        let store = HistoryStore(directory: dir, limit: 50)
+        var ids: [UUID] = []
+        for i in 0..<5 {
+            let id = UUID(); ids.append(id)
+            store.add(image: solidImage(), scale: 1, id: id, date: Date(timeIntervalSince1970: Double(i)))
+        }
+        try await waitUntil { store.entries.count == 5 }
+
+        store.updateLimit(2)
+        XCTAssertEqual(store.entries.count, 2)
+        // 가장 최신 2개(i=3,4)만 남음
+        XCTAssertTrue(store.entries.contains { $0.id == ids[4] })
+        XCTAssertFalse(store.entries.contains { $0.id == ids[0] })
+        let reloaded = HistoryStore(directory: dir, limit: 2)
+        XCTAssertEqual(reloaded.entries.count, 2)
+    }
+
+    func testUpdateLimitLargerKeepsAll() async throws {
+        let store = HistoryStore(directory: dir, limit: 50)
+        store.add(image: solidImage(), scale: 1, id: UUID(), date: Date())
+        try await waitUntil { store.entries.count == 1 }
+        store.updateLimit(100)
+        XCTAssertEqual(store.entries.count, 1)
+    }
+
     /// 조건이 참이 될 때까지 최대 2초 폴링(add가 비동기 인코딩이라)
     private func waitUntil(_ cond: @escaping () -> Bool) async throws {
         for _ in 0..<200 {
