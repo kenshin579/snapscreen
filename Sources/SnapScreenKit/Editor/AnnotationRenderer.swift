@@ -3,13 +3,19 @@ import CoreImage
 
 public extension PaletteColor {
     var nsColor: NSColor {
+        func dyn(_ light: UInt32, _ dark: UInt32) -> NSColor {
+            NSColor(name: nil) { appearance in
+                appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+                    ? NSColor(hex: dark) : NSColor(hex: light)
+            }
+        }
         switch self {
-        case .red: return .systemRed
-        case .orange: return .systemOrange
-        case .green: return .systemGreen
-        case .blue: return .systemBlue
-        case .black: return .black
-        case .white: return .white
+        case .red:    return dyn(0xFF3B30, 0xFF453A)
+        case .orange: return dyn(0xFF9500, 0xFF9F0A)
+        case .yellow: return dyn(0xFFCC00, 0xFFD60A)
+        case .green:  return dyn(0x34C759, 0x30D158)
+        case .blue:   return dyn(0x007AFF, 0x0A84FF)
+        case .label:  return dyn(0x1D1D1F, 0xF5F5F7)
         }
     }
 }
@@ -27,6 +33,20 @@ public enum AnnotationRenderer {
 
     public static func draw(_ annotation: Annotation, in ctx: CGContext,
                             baseImage: CGImage, scale: CGFloat) {
+        // pixelate/blur는 이미지 영역이라 그림자 제외(보안 목적·시각 훼손 방지)
+        let castsShadow: Bool = {
+            guard annotation.shadowEnabled else { return false }
+            switch annotation.kind {
+            case .pixelate, .blur: return false
+            default: return true
+            }
+        }()
+        if castsShadow {
+            ctx.saveGState()
+            ctx.setShadow(offset: CGSize(width: 0, height: -2 * scale),
+                          blur: 4 * scale,
+                          color: NSColor(white: 0, alpha: 0.35).cgColor)
+        }
         let color = annotation.color.nsColor.cgColor
         switch annotation.kind {
         case .arrow(let start, let end):
@@ -70,6 +90,7 @@ public enum AnnotationRenderer {
             ctx.addPath(PathSmoother.smoothedPath(points))
             ctx.strokePath()
         }
+        if castsShadow { ctx.restoreGState() }
     }
 
     private static func drawArrow(from start: CGPoint, to end: CGPoint,
@@ -162,11 +183,20 @@ public enum AnnotationRenderer {
         let label = "\(number)" as NSString
         let attrs: [NSAttributedString.Key: Any] = [
             .font: NSFont.boldSystemFont(ofSize: radius * 1.1),
-            .foregroundColor: color == .white ? NSColor.black : NSColor.white
+            .foregroundColor: color.ks_isLight ? NSColor.black : NSColor.white
         ]
         let size = label.size(withAttributes: attrs)
         label.draw(at: CGPoint(x: center.x - size.width / 2,
                                y: center.y - size.height / 2),
                    withAttributes: attrs)
+    }
+}
+
+private extension NSColor {
+    /// 배지 글자색 대비용 상대 명도 판정. 동적 색은 현재 NSAppearance 기준으로 해석된다.
+    var ks_isLight: Bool {
+        guard let c = usingColorSpace(.sRGB) else { return false }
+        let lum = 0.299 * c.redComponent + 0.587 * c.greenComponent + 0.114 * c.blueComponent
+        return lum > 0.6
     }
 }

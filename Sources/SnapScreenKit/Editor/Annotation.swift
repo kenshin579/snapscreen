@@ -2,7 +2,7 @@ import Foundation
 import CoreGraphics
 
 public enum PaletteColor: String, CaseIterable, Equatable, Codable {
-    case red, orange, green, blue, black, white
+    case red, orange, yellow, green, blue, label
 }
 
 public enum AnnotationKind: Equatable {
@@ -66,12 +66,15 @@ public struct Annotation: Equatable, Identifiable {
     public var kind: AnnotationKind
     public var color: PaletteColor
     public var lineWidth: CGFloat
+    public var shadowEnabled: Bool
 
     public init(id: UUID = UUID(), kind: AnnotationKind,
-                color: PaletteColor = .red, lineWidth: CGFloat = 4) {
+                color: PaletteColor = .red, lineWidth: CGFloat = 4,
+                shadowEnabled: Bool = false) {
         self.id = id
         self.kind = kind
         self.color = color
         self.lineWidth = lineWidth
+        self.shadowEnabled = shadowEnabled
     }
 }
