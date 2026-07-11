@@ -46,7 +46,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             coordinator: coordinator,
             updateState: updateState,
             openHome: { [weak self] in self?.homeWindowController?.show() },
-            openSettings: { [weak self] in self?.openSettings(nil) })
+            openSettings: { [weak self] in self?.openSettings(nil) },
+            openSettingsAbout: { [weak self] in self?.openSettings(section: .about) })
         Hotkeys.register(coordinator: coordinator)
         Notifier.requestAuthorization()
 
@@ -66,12 +67,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// 설정 창 열기. App 메뉴 "설정…"(⌘,)의 nil-target 셀렉터가 응답 체인으로 도달하고,
     /// 메뉴바 아이콘의 "설정…"도 이 메서드를 호출한다.
     @objc public func openSettings(_ sender: Any?) {
+        openSettings(section: nil)
+    }
+
+    /// section 지정 시 해당 섹션으로 전환해 연다 (예: 업데이트 메뉴 → About 직행).
+    func openSettings(section: SettingsSection?) {
         if settingsController == nil {
             settingsController = SettingsWindowController(
                 settings: coordinator.settings,
                 updateState: updateState,
                 policyManager: activationPolicyManager)
         }
-        settingsController?.show()
+        settingsController?.show(section: section)
     }
 }
