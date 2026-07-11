@@ -45,16 +45,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             coordinator: coordinator,
             updateState: updateState,
             openHome: { [weak self] in self?.homeWindowController?.show() },
-            openSettings: { [weak self] in
-                guard let self else { return }
-                if self.settingsController == nil {
-                    self.settingsController = SettingsWindowController(
-                        settings: self.coordinator.settings,
-                        updateState: self.updateState,
-                        policyManager: self.activationPolicyManager)
-                }
-                self.settingsController?.show()
-            })
+            openSettings: { [weak self] in self?.openSettings(nil) })
         Hotkeys.register(coordinator: coordinator)
         Notifier.requestAuthorization()
 
@@ -69,5 +60,17 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                           body: "화면 기록 권한을 다시 켜야 할 수 있습니다.")
         }
         UserDefaults.standard.set(AppInfo.version, forKey: lastRunKey)
+    }
+
+    /// 설정 창 열기. App 메뉴 "설정…"(⌘,)의 nil-target 셀렉터가 응답 체인으로 도달하고,
+    /// 메뉴바 아이콘의 "설정…"도 이 메서드를 호출한다.
+    @objc public func openSettings(_ sender: Any?) {
+        if settingsController == nil {
+            settingsController = SettingsWindowController(
+                settings: coordinator.settings,
+                updateState: updateState,
+                policyManager: activationPolicyManager)
+        }
+        settingsController?.show()
     }
 }
