@@ -15,6 +15,9 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     private var toolCancellable: AnyCancellable?
     private var isRecognizing = false
 
+    private let railWidth: CGFloat = 52
+    private let inspectorWidth: CGFloat = 170
+
     public init(result: CaptureResult, settings: SettingsStore,
                 policyManager: ActivationPolicyManager? = nil,
                 onClose: (() -> Void)? = nil) {
@@ -29,55 +32,72 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         let maxSize = NSScreen.main.map { CGSize(width: $0.visibleFrame.width * 0.8,
                                                  height: $0.visibleFrame.height * 0.8) }
             ?? CGSize(width: 1200, height: 800)
-        let fit = min(1, maxSize.width / pointSize.width, maxSize.height / pointSize.height)
-        let contentSize = CGSize(width: pointSize.width * fit, height: pointSize.height * fit)
+        let chrome = railWidth + inspectorWidth
+        let fit = min(1, (maxSize.width - chrome) / pointSize.width, maxSize.height / pointSize.height)
+        let canvasSize = CGSize(width: pointSize.width * fit, height: pointSize.height * fit)
 
-        let window = NSWindow(contentRect: CGRect(origin: .zero, size: contentSize),
+        let window = NSWindow(contentRect: CGRect(origin: .zero, size: canvasSize),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable],
                               backing: .buffered, defer: false)
-        window.title = "SnapScreen"
+        // 예정 파일명 (열릴 때 1회 생성) — 중앙 타이틀
+        window.title = FilenameFormatter(prefix: settings.filenamePrefix.isEmpty ? "snapscreen"
+                                         : settings.filenamePrefix).filename(for: Date())
         window.isReleasedWhenClosed = false
         super.init(window: window)
 
-        let toolbarHeight: CGFloat = 44
-        window.setContentSize(CGSize(width: contentSize.width,
-                                     height: contentSize.height + toolbarHeight))
-        window.contentAspectRatio = .zero // 툴바 포함이라 비율 고정 해제
-        window.minSize = NSSize(width: 320, height: 44 + 120) // 툴바 압착 방지
+        window.setContentSize(CGSize(width: canvasSize.width + chrome, height: canvasSize.height))
+        window.contentAspectRatio = .zero
+        window.minSize = NSSize(width: chrome + 240, height: 220)
 
         canvas = CanvasView(image: self.image, captureScale: result.scale,
                             store: store, state: state)
-        canvas.onCropConfirmed = { [weak self] rect in
-            self?.applyCrop(rect)
-        }
+        canvas.onCropConfirmed = { [weak self] rect in self?.applyCrop(rect) }
         canvas.onRequestOCR = { [weak self] in self?.performOCR() }
-        let toolbar = NSHostingView(rootView: ToolbarView(
-            state: state,
-            store: store,
+
+        let rail = NSHostingView(rootView: ToolRailView(
+            state: state, store: store,
             onCrop: { [weak self] in self?.canvas.beginCrop() },
-            onOCR: { [weak self] in self?.performOCR() },
+            onOCR: { [weak self] in self?.performOCR() }))
+        let inspector = NSHostingView(rootView: InspectorView(
+            state: state,
+            onCrop: { [weak self] in self?.canvas.beginCrop() },
+            onOCR: { [weak self] in self?.performOCR() }))
+
+        let container = NSView()
+        for v in [rail, canvas!, inspector] {
+            v.translatesAutoresizingMaskIntoConstraints = false
+            container.addSubview(v)
+        }
+        NSLayoutConstraint.activate([
+            rail.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            rail.topAnchor.constraint(equalTo: container.topAnchor),
+            rail.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            rail.widthAnchor.constraint(equalToConstant: railWidth),
+
+            canvas.leadingAnchor.constraint(equalTo: rail.trailingAnchor),
+            canvas.topAnchor.constraint(equalTo: container.topAnchor),
+            canvas.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+
+            inspector.leadingAnchor.constraint(equalTo: canvas.trailingAnchor),
+            inspector.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            inspector.topAnchor.constraint(equalTo: container.topAnchor),
+            inspector.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+            inspector.widthAnchor.constraint(equalToConstant: inspectorWidth)
+        ])
+        window.contentView = container
+
+        // 타이틀바 우측 버튼 (undo/redo/복사/저장)
+        let titleButtons = NSHostingView(rootView: EditorTitlebarButtons(
+            store: store,
             onUndo: { [weak self] in self?.undoAction(nil) },
             onRedo: { [weak self] in self?.redoAction(nil) },
             onCopy: { [weak self] in self?.copyMerged(nil) },
-            onSave: { [weak self] in self?.saveImage(nil) }
-        ))
-
-        let container = NSView()
-        container.addSubview(toolbar)
-        container.addSubview(canvas)
-        toolbar.translatesAutoresizingMaskIntoConstraints = false
-        canvas.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            toolbar.topAnchor.constraint(equalTo: container.topAnchor),
-            toolbar.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            toolbar.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            toolbar.heightAnchor.constraint(equalToConstant: toolbarHeight),
-            canvas.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
-            canvas.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            canvas.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            canvas.bottomAnchor.constraint(equalTo: container.bottomAnchor)
-        ])
-        window.contentView = container
+            onSave: { [weak self] in self?.saveImage(nil) }))
+        titleButtons.frame.size = titleButtons.fittingSize
+        let accessory = NSTitlebarAccessoryViewController()
+        accessory.view = titleButtons
+        accessory.layoutAttribute = .trailing
+        window.addTitlebarAccessoryViewController(accessory)
 
         window.delegate = self
         window.center()
@@ -86,12 +106,11 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         policyManager?.register(window)
         NSApp.activate(ignoringOtherApps: true)
 
-        // 도구 전환(단축키/툴바 세그먼트) 시 진행 중인 crop을 자동 취소해 상태 불일치 방지
+        // 도구 전환 시 진행 중 crop/erase 자동 취소 (기존 유지)
         toolCancellable = state.$tool.sink { [weak self] _ in
             self?.canvas.cancelCropIfActive()
             self?.canvas.cancelEraseIfActive()
             self?.canvas.needsDisplay = true
-            // 지우개 진입/이탈 시 커서(지우개 아이콘 ↔ 기본) 갱신
             if let canvas = self?.canvas { canvas.window?.invalidateCursorRects(for: canvas) }
         }
     }
@@ -100,7 +119,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
 
     public func windowWillClose(_ notification: Notification) {
         if let window { policyManager?.unregister(window) }
-        onClose?() // 스펙: 닫으면 경고 없이 폐기
+        onClose?()
         onClose = nil
     }
 
@@ -109,14 +128,13 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     }
 
     private func applyCrop(_ rect: CGRect) {
-        // nil = 빈/무효 선택 → crop 취소, 원본·창 크기 보존
         guard let cropped = ImageCropper.crop(image, toBottomLeftRect: rect) else { return }
         image = cropped
         canvas.replaceImage(cropped)
         resizeWindowToImage()
     }
 
-    /// 현재 이미지 비율에 맞게 창 content 크기 재조정 (init 사이징 규칙과 동일)
+    /// 현재 이미지 비율에 맞게 창 content 크기 재조정 (init 사이징 규칙과 동일, 레일+인스펙터 폭 포함)
     private func resizeWindowToImage() {
         guard let window else { return }
         let pointSize = CGSize(width: CGFloat(image.width) / result.scale,
@@ -124,11 +142,10 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         let maxSize = NSScreen.main.map { CGSize(width: $0.visibleFrame.width * 0.8,
                                                  height: $0.visibleFrame.height * 0.8) }
             ?? CGSize(width: 1200, height: 800)
-        let fit = min(1, maxSize.width / pointSize.width, maxSize.height / pointSize.height)
-        let contentSize = CGSize(width: pointSize.width * fit, height: pointSize.height * fit)
-        let toolbarHeight: CGFloat = 44
-        window.setContentSize(CGSize(width: contentSize.width,
-                                     height: contentSize.height + toolbarHeight))
+        let chrome = railWidth + inspectorWidth
+        let fit = min(1, (maxSize.width - chrome) / pointSize.width, maxSize.height / pointSize.height)
+        let canvasSize = CGSize(width: pointSize.width * fit, height: pointSize.height * fit)
+        window.setContentSize(CGSize(width: canvasSize.width + chrome, height: canvasSize.height))
     }
 
     // MARK: - 메인 메뉴 액션 (MainMenuBuilder의 nil-target 셀렉터가 응답 체인으로 도달)
@@ -154,7 +171,6 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     }
 
     @objc public func performOCR() {
-        // 연속 실행(E 키 반복 등) 중 인식 중첩 방지 — 중복 클립보드 기록/알림 회피
         guard !isRecognizing else { return }
         isRecognizing = true
         TextRecognizer.recognize(image) { [weak self] result in
