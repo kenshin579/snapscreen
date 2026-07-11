@@ -22,9 +22,9 @@ public enum DesignTokens {
             light: NSColor(white: 0, alpha: 0.06),
             dark: NSColor(white: 1, alpha: 0.10))
 
-        /// 어두운 타일 위 아이콘 액센트 틴트 — 라이트는 시스템 액센트, 다크는 #409CFF
+        /// 어두운 타일 위 아이콘 액센트 틴트 — 라이트는 시스템 액센트, 다크는 #409CFF(어두운 타일 위 가독성용 고정 틴트)
         public static let accentIconTint = dynamic(
-            light: NSColor(hex: 0x007AFF),
+            light: .controlAccentColor,
             dark: NSColor(hex: 0x409CFF))
 
         // MARK: 키캡 칩 (KeycapChip 소비)
