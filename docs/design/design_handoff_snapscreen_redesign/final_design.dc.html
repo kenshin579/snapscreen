@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><meta name="design_doc_mode" content="canvas"><title>SnapScreen 최종 디자인</title><style>
+body{margin:0;background:#e9e7e2;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif}
+a{color:#2a78d6}a:hover{color:#1b5cab}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(0,0,0,.08);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 6px}
+.dv-tid{font:600 10px ui-monospace,Menlo,monospace;padding:3px 7px;background:#1a1a1a;color:#fff;border-radius:4px;text-decoration:none}
+.dv-tname{font:600 13px/1.2 system-ui,sans-serif;color:#1a1a1a}
+.dv-grp{font:600 11px/1 system-ui;color:rgba(0,0,0,.45);text-transform:uppercase;letter-spacing:.08em;margin:26px 0 14px}
+.dv-opts{display:flex;flex-wrap:wrap;gap:28px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:9px;scroll-margin-top:16px}
+.dv-oid{font:600 10.5px ui-monospace,Menlo,monospace;padding:3px 7px;background:rgba(0,0,0,.08);color:#1a1a1a;border-radius:5px;text-decoration:none}
+.dv-olabel{display:flex;align-items:baseline;gap:8px;font:400 11px/1.3 system-ui,sans-serif;color:rgba(0,0,0,.55)}
+.dv-card{max-width:100%}
+.dv-opt:target .dv-oid{background:#2a78d6;color:#fff}
+.dv-next{margin:22px 0 0;font:12px/1.5 system-ui,sans-serif;color:rgba(0,0,0,.5)}
+</style></helmet>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">최종 확정 디자인 — 홈 · 편집기 · 설정 (라이트/다크)</span></div>
+<p style="margin:0;font-size:12px;line-height:1.6;color:rgba(0,0,0,.55);max-width:720px">세 화면을 하나의 시스템으로 통일: 단축키는 키캡 칩으로 통일, 액센트 #007AFF/#0A84FF, 창 radius 12, 동일한 팔레트·아이콘 규격. 각 화면을 라이트/다크 모두 그렸습니다.</p>
+
+<div class="dv-grp">라이트 모드</div>
+<div class="dv-opts">
+
+<!-- 2a HOME light -->
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>홈 — 라이트</div>
+<div class="dv-card" data-screen-label="2a 홈 라이트">
+<div style="width:440px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#f7f7f9,#f0f0f3);border:1px solid rgba(0,0,0,.1);box-shadow:0 22px 50px rgba(0,0,0,.22),0 2px 8px rgba(0,0,0,.08)">
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px 4px">
+    <span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span><span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span><span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span>
+    <span style="flex:1;text-align:center;font-size:13px;font-weight:600;color:#3a3a3c;margin-left:-52px">SnapScreen</span>
+  </div>
+  <div style="padding:14px 18px 16px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 14px;border-radius:14px;background:rgba(255,255,255,.72);border:1px solid rgba(0,0,0,.06);box-shadow:0 1px 2px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.9)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#007aff" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="14" rx="2.5" stroke-dasharray="3.4 3"></rect></svg>
+        <span style="font-size:13px;font-weight:600;color:#1d1d1f">영역</span>
+        <span style="display:flex;gap:3px"><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⇧</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⌘</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">4</span></span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 14px;border-radius:14px;background:rgba(255,255,255,.72);border:1px solid rgba(0,0,0,.06);box-shadow:0 1px 2px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.9)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#007aff" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="14" rx="2.5"></rect><path d="M4 9h16"></path><circle cx="6.6" cy="7" r=".9" fill="#007aff" stroke="none"></circle><circle cx="9.2" cy="7" r=".9" fill="#007aff" stroke="none"></circle></svg>
+        <span style="font-size:13px;font-weight:600;color:#1d1d1f">창</span>
+        <span style="display:flex;gap:3px"><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⇧</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⌘</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">5</span></span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 14px;border-radius:14px;background:rgba(255,255,255,.72);border:1px solid rgba(0,0,0,.06);box-shadow:0 1px 2px rgba(0,0,0,.05),inset 0 1px 0 rgba(255,255,255,.9)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#007aff" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="12" rx="2"></rect><path d="M9.5 20h5M12 17v3"></path></svg>
+        <span style="font-size:13px;font-weight:600;color:#1d1d1f">전체 화면</span>
+        <span style="display:flex;gap:3px"><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⇧</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⌘</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:5px;padding:2px 5px">6</span></span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <span style="font-size:12px;font-weight:600;color:#6e6e73">최근 캡처</span>
+        <span style="font-size:11px;color:#8e8e93">모두 지우기</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="position:relative;width:120px;height:78px;border-radius:10px;overflow:hidden;border:1px solid rgba(0,0,0,.1);background:linear-gradient(135deg,#c9d8ee,#eadfd2)">
+          <div style="position:absolute;inset:14px 18px auto 14px;height:38px;border-radius:5px;background:rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(0,0,0,.15)"></div>
+          <span style="position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">✕</span>
+        </div>
+        <div style="width:120px;height:78px;border-radius:10px;border:1px solid rgba(0,0,0,.1);background:linear-gradient(135deg,#d8e8d8,#cfd8e6)"></div>
+        <div style="width:120px;height:78px;border-radius:10px;border:1px solid rgba(0,0,0,.1);background:linear-gradient(135deg,#ead8d3,#d6d3ea)"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#aeaeb2" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2.5M12 18.5V21M21 12h-2.5M5.5 12H3M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8M18.4 18.4l-1.8-1.8M7.4 7.4L5.6 5.6"></path></svg>
+      <span style="font:400 10.5px ui-monospace,Menlo,monospace;color:#aeaeb2">v1.4.2</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- 2b EDITOR light -->
+<div class="dv-opt" id="2b">
+<div class="dv-olabel"><a class="dv-oid" href="#2b">2b</a>편집기 — 라이트 (도구 레일 + 인스펙터)</div>
+<div class="dv-card" data-screen-label="2b 편집기 라이트">
+<div style="width:760px;border-radius:12px;overflow:hidden;background:#f4f4f6;border:1px solid rgba(0,0,0,.1);box-shadow:0 22px 50px rgba(0,0,0,.22)">
+  <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(0,0,0,.07)">
+    <span style="display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span><span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span><span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span></span>
+    <span style="flex:1;text-align:center;font-size:12.5px;font-weight:500;color:#6e6e73;margin-left:-52px">스크린샷 2026-07-11 오후 3.24.10</span>
+    <span style="width:26px;height:26px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linecap="round"><path d="M8 7 4 11l4 4M4 11h11a5 5 0 0 1 0 10h-3" transform="translate(0,-2.5)"></path></svg></span>
+    <span style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;opacity:.35"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linecap="round"><path d="m16 7 4 4-4 4M20 11H9a5 5 0 0 0 0 10h3" transform="translate(0,-2.5)"></path></svg></span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#1d1d1f;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.07);border-radius:8px;padding:5px 11px;white-space:nowrap;flex:none">복사</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#fff;background:#007aff;border-radius:8px;padding:5px 12px;white-space:nowrap;flex:none">저장</span>
+  </div>
+  <div style="display:flex;height:340px">
+    <div style="width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;background:rgba(255,255,255,.65);border-right:1px solid rgba(0,0,0,.06)">
+      <span style="width:36px;height:32px;border-radius:9px;background:#007aff;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 18 17 7M17 14V7h-7"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="1.5"></rect></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8"><circle cx="12" cy="12" r="7"></circle></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#48484a;font-family:Georgia,serif">T</span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8"><path d="M12 3.5c3 4 5.5 6.8 5.5 10a5.5 5.5 0 0 1-11 0c0-3.2 2.5-6 5.5-10Z"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="#48484a"><rect x="5" y="5" width="4" height="4"></rect><rect x="13" y="5" width="4" height="4" opacity=".5"></rect><rect x="9" y="9" width="4" height="4" opacity=".7"></rect><rect x="5" y="13" width="4" height="4" opacity=".4"></rect><rect x="13" y="13" width="4" height="4"></rect></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.6"><circle cx="12" cy="12" r="8"></circle><path d="M10.5 9.5 12.5 8v8" stroke-linecap="round"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linecap="round"><path d="M4 17c3-6 5-9 7-9s2 4 4 4 3-3 5-7"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linejoin="round"><path d="m14 4 6 6-8 8H8l-3-3 9-11ZM8 18h12"></path></svg></span>
+      <span style="flex:1"></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linecap="round"><path d="M7 3v14a1 1 0 0 0 1 1h13M3 7h14a1 1 0 0 1 1 1v13"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linecap="round"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M8 9.5h8M8 12.5h5"></path></svg></span>
+    </div>
+    <div style="flex:1;background:radial-gradient(circle at 30% 20%,#e3e6ec,#d3d7df);display:flex;align-items:center;justify-content:center">
+      <div style="position:relative;width:420px;height:230px;border-radius:10px;background:linear-gradient(160deg,#fdfdfe,#eef1f6);box-shadow:0 10px 30px rgba(0,0,0,.22)">
+        <div style="position:absolute;top:16px;left:18px;right:18px;height:11px;border-radius:4px;background:rgba(0,0,0,.07)"></div>
+        <div style="position:absolute;top:38px;left:18px;width:58%;height:8px;border-radius:4px;background:rgba(0,0,0,.06)"></div>
+        <div style="position:absolute;top:66px;left:18px;width:180px;height:110px;border-radius:8px;background:linear-gradient(135deg,#cfe0f4,#e8ddcf)"></div>
+        <svg style="position:absolute;top:50px;right:30px" width="130" height="90" viewBox="0 0 130 90" fill="none"><path d="M14 14 C 50 26, 75 45, 100 68" stroke="#ff3b30" stroke-width="3.5" stroke-linecap="round"></path><path d="M90 68 L102 70 L96 57" stroke="#ff3b30" stroke-width="3.5" fill="#ff3b30" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+    </div>
+    <div style="width:170px;background:rgba(255,255,255,.75);border-left:1px solid rgba(0,0,0,.06);padding:14px;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:11px;font-weight:600;color:#8e8e93">색상</span>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+          <span style="width:18px;height:18px;border-radius:50%;background:#ff3b30;box-shadow:0 0 0 2px #fff,0 0 0 3.5px #007aff"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#ff9500"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#ffcc00"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#34c759"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#007aff"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#1d1d1f"></span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:11px;font-weight:600;color:#8e8e93">선 굵기</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="flex:1;height:3px;border-radius:2px;background:rgba(0,0,0,.12);position:relative"><span style="position:absolute;left:45%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#fff;border:.5px solid rgba(0,0,0,.15);box-shadow:0 1px 3px rgba(0,0,0,.25)"></span></span>
+          <span style="font-size:11px;color:#6e6e73;font-variant-numeric:tabular-nums">3px</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:#1d1d1f">그림자</span>
+        <span style="width:34px;height:20px;border-radius:12px;background:#34c759;position:relative"><span style="position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)"></span></span>
+      </div>
+      <div style="height:1px;background:rgba(0,0,0,.07)"></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:11px;font-weight:600;color:#8e8e93">빠른 작업</span>
+        <span style="display:flex;align-items:center;gap:7px;font-size:12px;color:#1d1d1f;background:rgba(0,0,0,.045);border-radius:8px;padding:7px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linecap="round"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M8 9.5h8M8 12.5h5"></path></svg>텍스트 추출</span>
+        <span style="display:flex;align-items:center;gap:7px;font-size:12px;color:#1d1d1f;background:rgba(0,0,0,.045);border-radius:8px;padding:7px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#48484a" stroke-width="1.8" stroke-linecap="round"><path d="M7 3v14a1 1 0 0 0 1 1h13M3 7h14a1 1 0 0 1 1 1v13"></path></svg>자르기</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- 2c SETTINGS light -->
+<div class="dv-opt" id="2c">
+<div class="dv-olabel"><a class="dv-oid" href="#2c">2c</a>설정 — 라이트 (사이드바 2-pane)</div>
+<div class="dv-card" data-screen-label="2c 설정 라이트">
+<div style="width:620px;border-radius:12px;overflow:hidden;background:#f2f2f6;border:1px solid rgba(0,0,0,.1);box-shadow:0 22px 50px rgba(0,0,0,.22);display:flex">
+  <div style="width:190px;background:rgba(236,236,240,.9);border-right:1px solid rgba(0,0,0,.07);padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+    <div style="display:flex;gap:8px;padding:2px 4px 14px"><span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span><span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span><span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span></div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;background:#007aff">
+      <span style="width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M9 5h6M12 5v6m-5.5 8.5a6.5 6.5 0 1 1 11 0" transform="translate(0,1)"></path></svg></span>
+      <span style="font-size:12.5px;font-weight:600;color:#fff">단축키</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px">
+      <span style="width:22px;height:22px;border-radius:6px;background:#34c759;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 7A1.5 1.5 0 0 1 5 5.5h4l2 2.5h8A1.5 1.5 0 0 1 20.5 9.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5V7Z"></path></svg></span>
+      <span style="font-size:12.5px;color:#1d1d1f">저장</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px">
+      <span style="width:22px;height:22px;border-radius:6px;background:#8e8e93;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l2.5 2.5"></path></svg></span>
+      <span style="font-size:12.5px;color:#1d1d1f">히스토리</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px">
+      <span style="width:22px;height:22px;border-radius:6px;background:#636366;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 11v5M12 7.5v.5"></path></svg></span>
+      <span style="font-size:12.5px;color:#1d1d1f">정보</span>
+    </div>
+    <span style="flex:1"></span>
+    <span style="font:400 10px ui-monospace,Menlo,monospace;color:#aeaeb2;padding:0 6px">v1.4.2</span>
+  </div>
+  <div style="flex:1;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+    <span style="font-size:15px;font-weight:700;color:#1d1d1f">단축키</span>
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px">
+        <span style="flex:1;font-size:13px;color:#1d1d1f">영역 캡처</span>
+        <span style="display:flex;gap:3px">
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⇧</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⌘</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:6px;padding:3px 7px">4</span>
+        </span>
+      </div>
+      <div style="height:1px;background:rgba(0,0,0,.06);margin-left:13px"></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:rgba(0,122,255,.08)">
+        <span style="flex:1;font-size:13px;color:#1d1d1f">창 캡처</span>
+        <span style="font-size:11.5px;color:#007aff;font-weight:600">녹음 중… 키를 누르세요</span>
+      </div>
+      <div style="height:1px;background:rgba(0,0,0,.06);margin-left:13px"></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px">
+        <span style="flex:1;font-size:13px;color:#1d1d1f">전체 화면 캡처</span>
+        <span style="display:flex;gap:3px">
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⇧</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⌘</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#3a3a3c;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.1);border-bottom-width:2px;border-radius:6px;padding:3px 7px">6</span>
+        </span>
+      </div>
+    </div>
+    <p style="margin:0;font-size:11.5px;line-height:1.5;color:#8e8e93">단축키는 다른 앱과 겹치지 않는지 자동으로 검사합니다. 클릭한 뒤 원하는 키 조합을 누르세요.</p>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-grp">다크 모드</div>
+<div class="dv-opts">
+
+<!-- 2d HOME dark -->
+<div class="dv-opt" id="2d">
+<div class="dv-olabel"><a class="dv-oid" href="#2d">2d</a>홈 — 다크</div>
+<div class="dv-card" data-screen-label="2d 홈 다크">
+<div style="width:440px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#2c2c30,#232327);border:1px solid rgba(255,255,255,.13);box-shadow:0 22px 50px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.07)">
+  <div style="display:flex;align-items:center;gap:8px;padding:12px 14px 4px">
+    <span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span><span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span><span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span>
+    <span style="flex:1;text-align:center;font-size:13px;font-weight:600;color:#e5e5ea;margin-left:-52px">SnapScreen</span>
+  </div>
+  <div style="padding:14px 18px 16px;display:flex;flex-direction:column;gap:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 14px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#409cff" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="14" rx="2.5" stroke-dasharray="3.4 3"></rect></svg>
+        <span style="font-size:13px;font-weight:600;color:#f5f5f7">영역</span>
+        <span style="display:flex;gap:3px"><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⇧</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⌘</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">4</span></span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 14px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#409cff" stroke-width="1.7" stroke-linecap="round"><rect x="4" y="5" width="16" height="14" rx="2.5"></rect><path d="M4 9h16"></path><circle cx="6.6" cy="7" r=".9" fill="#409cff" stroke="none"></circle><circle cx="9.2" cy="7" r=".9" fill="#409cff" stroke="none"></circle></svg>
+        <span style="font-size:13px;font-weight:600;color:#f5f5f7">창</span>
+        <span style="display:flex;gap:3px"><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⇧</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⌘</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">5</span></span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 8px 14px;border-radius:14px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#409cff" stroke-width="1.7" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="12" rx="2"></rect><path d="M9.5 20h5M12 17v3"></path></svg>
+        <span style="font-size:13px;font-weight:600;color:#f5f5f7">전체 화면</span>
+        <span style="display:flex;gap:3px"><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⇧</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">⌘</span><span style="font:600 10px ui-monospace,Menlo,monospace;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:5px;padding:2px 5px">6</span></span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between">
+        <span style="font-size:12px;font-weight:600;color:#98989d">최근 캡처</span>
+        <span style="font-size:11px;color:#7c7c82">모두 지우기</span>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="position:relative;width:120px;height:78px;border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,#3a4a63,#5b4a52)">
+          <div style="position:absolute;inset:14px 18px auto 14px;height:38px;border-radius:5px;background:rgba(255,255,255,.22);box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>
+          <span style="position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center">✕</span>
+        </div>
+        <div style="width:120px;height:78px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,#41564a,#3d4a5c)"></div>
+        <div style="width:120px;height:78px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:linear-gradient(135deg,#5c4a44,#464060)"></div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c7c82" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2.5M12 18.5V21M21 12h-2.5M5.5 12H3M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8M18.4 18.4l-1.8-1.8M7.4 7.4L5.6 5.6"></path></svg>
+      <span style="font:400 10.5px ui-monospace,Menlo,monospace;color:#7c7c82">v1.4.2</span>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- 2e EDITOR dark -->
+<div class="dv-opt" id="2e">
+<div class="dv-olabel"><a class="dv-oid" href="#2e">2e</a>편집기 — 다크</div>
+<div class="dv-card" data-screen-label="2e 편집기 다크">
+<div style="width:760px;border-radius:12px;overflow:hidden;background:#232326;border:1px solid rgba(255,255,255,.12);box-shadow:0 22px 50px rgba(0,0,0,.5)">
+  <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.08)">
+    <span style="display:flex;gap:8px"><span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span><span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span><span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span></span>
+    <span style="flex:1;text-align:center;font-size:12.5px;font-weight:500;color:#98989d;margin-left:-52px">스크린샷 2026-07-11 오후 3.24.10</span>
+    <span style="width:26px;height:26px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linecap="round"><path d="M8 7 4 11l4 4M4 11h11a5 5 0 0 1 0 10h-3" transform="translate(0,-2.5)"></path></svg></span>
+    <span style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;opacity:.35"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linecap="round"><path d="m16 7 4 4-4 4M20 11H9a5 5 0 0 0 0 10h3" transform="translate(0,-2.5)"></path></svg></span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:#e5e5ea;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:5px 11px;white-space:nowrap;flex:none">복사</span>
+    <span style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#fff;background:#0a84ff;border-radius:8px;padding:5px 12px;white-space:nowrap;flex:none">저장</span>
+  </div>
+  <div style="display:flex;height:340px">
+    <div style="width:52px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0;background:rgba(28,28,31,.85);border-right:1px solid rgba(255,255,255,.07)">
+      <span style="width:36px;height:32px;border-radius:9px;background:#0a84ff;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M6 18 17 7M17 14V7h-7"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8"><rect x="4" y="6" width="16" height="12" rx="1.5"></rect></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8"><circle cx="12" cy="12" r="7"></circle></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;color:#c7c7cc;font-family:Georgia,serif">T</span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8"><path d="M12 3.5c3 4 5.5 6.8 5.5 10a5.5 5.5 0 0 1-11 0c0-3.2 2.5-6 5.5-10Z"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="#c7c7cc"><rect x="5" y="5" width="4" height="4"></rect><rect x="13" y="5" width="4" height="4" opacity=".5"></rect><rect x="9" y="9" width="4" height="4" opacity=".7"></rect><rect x="5" y="13" width="4" height="4" opacity=".4"></rect><rect x="13" y="13" width="4" height="4"></rect></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.6"><circle cx="12" cy="12" r="8"></circle><path d="M10.5 9.5 12.5 8v8" stroke-linecap="round"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linecap="round"><path d="M4 17c3-6 5-9 7-9s2 4 4 4 3-3 5-7"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linejoin="round"><path d="m14 4 6 6-8 8H8l-3-3 9-11ZM8 18h12"></path></svg></span>
+      <span style="flex:1"></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linecap="round"><path d="M7 3v14a1 1 0 0 0 1 1h13M3 7h14a1 1 0 0 1 1 1v13"></path></svg></span>
+      <span style="width:36px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linecap="round"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M8 9.5h8M8 12.5h5"></path></svg></span>
+    </div>
+    <div style="flex:1;background:radial-gradient(circle at 30% 20%,#2c3240,#1f2229 70%);display:flex;align-items:center;justify-content:center">
+      <div style="position:relative;width:420px;height:230px;border-radius:10px;background:linear-gradient(160deg,#f4f5f8,#e4e8ef);box-shadow:0 14px 40px rgba(0,0,0,.5)">
+        <div style="position:absolute;top:16px;left:18px;right:18px;height:11px;border-radius:4px;background:rgba(0,0,0,.08)"></div>
+        <div style="position:absolute;top:38px;left:18px;width:58%;height:8px;border-radius:4px;background:rgba(0,0,0,.06)"></div>
+        <div style="position:absolute;top:66px;left:18px;width:180px;height:110px;border-radius:8px;background:linear-gradient(135deg,#cfe0f4,#e8ddcf)"></div>
+        <svg style="position:absolute;top:50px;right:30px" width="130" height="90" viewBox="0 0 130 90" fill="none"><path d="M14 14 C 50 26, 75 45, 100 68" stroke="#ff453a" stroke-width="3.5" stroke-linecap="round"></path><path d="M90 68 L102 70 L96 57" stroke="#ff453a" stroke-width="3.5" fill="#ff453a" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+    </div>
+    <div style="width:170px;background:rgba(28,28,31,.85);border-left:1px solid rgba(255,255,255,.07);padding:14px;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:11px;font-weight:600;color:#98989d">색상</span>
+        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">
+          <span style="width:18px;height:18px;border-radius:50%;background:#ff453a;box-shadow:0 0 0 2px #232326,0 0 0 3.5px #0a84ff"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#ff9f0a"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#ffd60a"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#30d158"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#0a84ff"></span>
+          <span style="width:18px;height:18px;border-radius:50%;background:#f5f5f7"></span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:11px;font-weight:600;color:#98989d">선 굵기</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.18);position:relative"><span style="position:absolute;left:45%;top:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4)"></span></span>
+          <span style="font-size:11px;color:#98989d;font-variant-numeric:tabular-nums">3px</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:12px;color:#f5f5f7">그림자</span>
+        <span style="width:34px;height:20px;border-radius:12px;background:#30d158;position:relative"><span style="position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25)"></span></span>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.08)"></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:11px;font-weight:600;color:#98989d">빠른 작업</span>
+        <span style="display:flex;align-items:center;gap:7px;font-size:12px;color:#f5f5f7;background:rgba(255,255,255,.07);border-radius:8px;padding:7px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linecap="round"><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16M8 9.5h8M8 12.5h5"></path></svg>텍스트 추출</span>
+        <span style="display:flex;align-items:center;gap:7px;font-size:12px;color:#f5f5f7;background:rgba(255,255,255,.07);border-radius:8px;padding:7px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" stroke-width="1.8" stroke-linecap="round"><path d="M7 3v14a1 1 0 0 0 1 1h13M3 7h14a1 1 0 0 1 1 1v13"></path></svg>자르기</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- 2f SETTINGS dark -->
+<div class="dv-opt" id="2f">
+<div class="dv-olabel"><a class="dv-oid" href="#2f">2f</a>설정 — 다크</div>
+<div class="dv-card" data-screen-label="2f 설정 다크">
+<div style="width:620px;border-radius:12px;overflow:hidden;background:#232326;border:1px solid rgba(255,255,255,.12);box-shadow:0 22px 50px rgba(0,0,0,.45);display:flex">
+  <div style="width:190px;background:rgba(28,28,31,.9);border-right:1px solid rgba(255,255,255,.08);padding:12px 10px;display:flex;flex-direction:column;gap:2px">
+    <div style="display:flex;gap:8px;padding:2px 4px 14px"><span style="width:12px;height:12px;border-radius:50%;background:#ff5f57"></span><span style="width:12px;height:12px;border-radius:50%;background:#febc2e"></span><span style="width:12px;height:12px;border-radius:50%;background:#28c840"></span></div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px;background:rgba(10,132,255,.9)">
+      <span style="width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M9 5h6M12 5v6m-5.5 8.5a6.5 6.5 0 1 1 11 0" transform="translate(0,1)"></path></svg></span>
+      <span style="font-size:12.5px;font-weight:600;color:#fff">단축키</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px">
+      <span style="width:22px;height:22px;border-radius:6px;background:#34c759;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"><path d="M3.5 7A1.5 1.5 0 0 1 5 5.5h4l2 2.5h8A1.5 1.5 0 0 1 20.5 9.5v8A1.5 1.5 0 0 1 19 19H5a1.5 1.5 0 0 1-1.5-1.5V7Z"></path></svg></span>
+      <span style="font-size:12.5px;color:#e5e5ea">저장</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px">
+      <span style="width:22px;height:22px;border-radius:6px;background:#8e8e93;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v4l2.5 2.5"></path></svg></span>
+      <span style="font-size:12.5px;color:#e5e5ea">히스토리</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:8px">
+      <span style="width:22px;height:22px;border-radius:6px;background:#48484a;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8"></circle><path d="M12 11v5M12 7.5v.5"></path></svg></span>
+      <span style="font-size:12.5px;color:#e5e5ea">정보</span>
+    </div>
+    <span style="flex:1"></span>
+    <span style="font:400 10px ui-monospace,Menlo,monospace;color:#636366;padding:0 6px">v1.4.2</span>
+  </div>
+  <div style="flex:1;padding:18px 20px;display:flex;flex-direction:column;gap:14px">
+    <span style="font-size:15px;font-weight:700;color:#f5f5f7">단축키</span>
+    <div style="background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.08);border-radius:12px;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px">
+        <span style="flex:1;font-size:13px;color:#f5f5f7">영역 캡처</span>
+        <span style="display:flex;gap:3px">
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#f5f5f7;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⇧</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#f5f5f7;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⌘</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#f5f5f7;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:6px;padding:3px 7px">4</span>
+        </span>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.07);margin-left:13px"></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:rgba(10,132,255,.12)">
+        <span style="flex:1;font-size:13px;color:#f5f5f7">창 캡처</span>
+        <span style="font-size:11.5px;color:#0a84ff;font-weight:600">녹음 중… 키를 누르세요</span>
+      </div>
+      <div style="height:1px;background:rgba(255,255,255,.07);margin-left:13px"></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:11px 13px">
+        <span style="flex:1;font-size:13px;color:#f5f5f7">전체 화면 캡처</span>
+        <span style="display:flex;gap:3px">
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#f5f5f7;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⇧</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#f5f5f7;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:6px;padding:3px 7px">⌘</span>
+          <span style="font:600 11px ui-monospace,Menlo,monospace;color:#f5f5f7;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.14);border-bottom-width:2px;border-radius:6px;padding:3px 7px">6</span>
+        </span>
+      </div>
+    </div>
+    <p style="margin:0;font-size:11.5px;line-height:1.5;color:#8e8e93">단축키는 다른 앱과 겹치지 않는지 자동으로 검사합니다. 클릭한 뒤 원하는 키 조합을 누르세요.</p>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+
+</section>
+
+</x-dc>
+</body>
+</html>
