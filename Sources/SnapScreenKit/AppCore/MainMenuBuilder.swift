@@ -6,6 +6,8 @@ public enum MainMenuBuilder {
         let main = NSMenu()
 
         let appMenu = NSMenu()
+        appMenu.addItem(withTitle: "설정…", action: Selector(("openSettings:")), keyEquivalent: ",")
+        appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "SnapScreen 종료",
                         action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         main.addItem(submenu(appMenu, title: "SnapScreen"))
