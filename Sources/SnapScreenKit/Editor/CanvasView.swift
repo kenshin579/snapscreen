@@ -152,9 +152,9 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         ctx.translateBy(x: fitOffset.x, y: fitOffset.y)
         ctx.scaleBy(x: fitScale, y: fitScale)
         ctx.interpolationQuality = .high
-        // 이미지 드롭섀도 — 이미지 알파 모양을 따라. 파라미터는 스케일된 CTM 기준이라 fitScale로 나눠 화면 픽셀 기준 유지.
-        let fs = max(fitScale, 0.0001)
-        ctx.setShadow(offset: CGSize(width: 0, height: -3 / fs), blur: 16 / fs,
+        // 이미지 드롭섀도 — 이미지 알파 모양을 따라. CG 그림자 파라미터는 base-space(CTM 미적용)라
+        // 리터럴 포인트 값이 곧 화면 기준: fitScale 보정 불필요.
+        ctx.setShadow(offset: CGSize(width: 0, height: -3), blur: 16,
                       color: NSColor(white: 0, alpha: 0.28).cgColor)
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
         ctx.setShadow(offset: .zero, blur: 0, color: nil)   // 이후 주석은 이미지 그림자 상속 안 함
