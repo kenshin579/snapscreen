@@ -25,9 +25,9 @@ public struct HomeView: View {
         let shortcutName: KeyboardShortcuts.Name
     }
     private let items: [Item] = [
-        Item(mode: .area, symbol: "rectangle.dashed", title: "영역", shortcutName: .captureArea),
-        Item(mode: .window, symbol: "macwindow", title: "창", shortcutName: .captureWindow),
-        Item(mode: .fullScreen, symbol: "display", title: "전체 화면", shortcutName: .captureFullScreen)
+        Item(mode: .area, symbol: "rectangle.dashed", title: L("Area"), shortcutName: .captureArea),
+        Item(mode: .window, symbol: "macwindow", title: L("Window"), shortcutName: .captureWindow),
+        Item(mode: .fullScreen, symbol: "display", title: L("Full Screen"), shortcutName: .captureFullScreen)
     ]
     // 현재 왼쪽(leading)에 정렬된 항목 id. 트랙패드·화살표 스크롤 모두 반영(.scrollPosition).
     @State private var leadingID: UUID?
@@ -63,23 +63,23 @@ public struct HomeView: View {
             Divider()
 
             HStack {
-                Text("최근 캡처").font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
+                Text(L("Recent Captures")).font(.system(size: 12, weight: .semibold)).foregroundStyle(.secondary)
                 Spacer()
                 if !history.entries.isEmpty {
-                    Button("모두 지우기") { showClearConfirm = true }
+                    Button(L("Clear All")) { showClearConfirm = true }
                         .buttonStyle(.plain)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
             }
-            .confirmationDialog("최근 캡처를 모두 지울까요?",
+            .confirmationDialog(L("Clear all recent captures?"),
                                 isPresented: $showClearConfirm, titleVisibility: .visible) {
-                Button("모두 지우기", role: .destructive) { history.clear() }
-                Button("취소", role: .cancel) {}
+                Button(L("Clear All"), role: .destructive) { history.clear() }
+                Button(L("Cancel"), role: .cancel) {}
             }
 
             if history.entries.isEmpty {
-                Text("아직 캡처가 없습니다")
+                Text(L("No captures yet"))
                     .font(.system(size: 12)).foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, minHeight: 78, maxHeight: 78)
             } else {
@@ -117,7 +117,7 @@ public struct HomeView: View {
         }
         .buttonStyle(CaptureTileButtonStyle())
         .accessibilityLabel(item.title)
-        .accessibilityHint("스크린샷을 캡처합니다")
+        .accessibilityHint(L("Captures a screenshot"))
     }
 
     /// 단축키 표시: 설정돼 있으면 개별 키캡 칩, 미설정이면 "미설정" 텍스트.
@@ -125,7 +125,7 @@ public struct HomeView: View {
     private func shortcutView(_ name: KeyboardShortcuts.Name) -> some View {
         let keys = ShortcutKeycaps.decompose(KeyboardShortcuts.getShortcut(for: name))
         if keys.isEmpty {
-            Text("미설정").font(.system(size: 11)).foregroundStyle(.tertiary)
+            Text(L("Not Set")).font(.system(size: 11)).foregroundStyle(.tertiary)
         } else {
             HStack(spacing: 3) {
                 ForEach(keys, id: \.self) { KeycapChip($0) }
@@ -211,7 +211,7 @@ public struct HomeView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(4)
-                .help("삭제")
+                .help(L("Delete"))
             }
         }
         .help(entry.date.formatted(date: .abbreviated, time: .shortened))
@@ -230,7 +230,7 @@ public struct HomeView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(.tertiary)
-            .help("설정 열기")
+            .help(L("Open Settings"))
 
             Spacer()
 

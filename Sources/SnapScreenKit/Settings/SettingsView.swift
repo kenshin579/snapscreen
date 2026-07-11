@@ -7,10 +7,10 @@ enum SettingsSection: CaseIterable {
 
     var label: String {
         switch self {
-        case .shortcuts: return "단축키"
-        case .saving: return "저장"
-        case .history: return "히스토리"
-        case .about: return "정보"
+        case .shortcuts: return L("Shortcuts")
+        case .saving: return L("Saving")
+        case .history: return L("History")
+        case .about: return L("About")
         }
     }
 
