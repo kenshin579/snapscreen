@@ -47,7 +47,8 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
 
         window.setContentSize(CGSize(width: canvasSize.width + chrome, height: canvasSize.height))
         window.contentAspectRatio = .zero
-        window.minSize = NSSize(width: chrome + 240, height: 220)
+        // 높이 하한: 도구 레일 최소 콘텐츠(약 412pt) + 타이틀바 여유 — 레일 버튼 잘림 방지
+        window.minSize = NSSize(width: chrome + 240, height: 460)
 
         canvas = CanvasView(image: self.image, captureScale: result.scale,
                             store: store, state: state)
@@ -93,6 +94,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
             onRedo: { [weak self] in self?.redoAction(nil) },
             onCopy: { [weak self] in self?.copyMerged(nil) },
             onSave: { [weak self] in self?.saveImage(nil) }))
+        titleButtons.layoutSubtreeIfNeeded()   // 창 부착 전 fittingSize 신뢰성 확보
         titleButtons.frame.size = titleButtons.fittingSize
         let accessory = NSTitlebarAccessoryViewController()
         accessory.view = titleButtons
