@@ -37,6 +37,22 @@ public enum DesignTokens {
         public static let keycapText = dynamic(
             light: NSColor(hex: 0x3A3A3C),
             dark: NSColor(hex: 0xF5F5F7))
+
+        // MARK: 홈 화면 고유
+        /// 홈 창 배경 그라디언트 상단 — 라이트 #F7F7F9 / 다크 #2C2C30
+        public static let homeBackgroundTop = dynamic(
+            light: NSColor(hex: 0xF7F7F9),
+            dark: NSColor(hex: 0x2C2C30))
+        /// 홈 창 배경 그라디언트 하단 — 라이트 #F0F0F3 / 다크 #232327
+        public static let homeBackgroundBottom = dynamic(
+            light: NSColor(hex: 0xF0F0F3),
+            dark: NSColor(hex: 0x232327))
+        /// 캡처 타일 내부 상단 하이라이트 — 라이트 흰색 90% / 다크 흰색 8%
+        public static let tileTopHighlight = dynamic(
+            light: NSColor(white: 1, alpha: 0.9),
+            dark: NSColor(white: 1, alpha: 0.08))
+        /// 썸네일 hover 삭제 버튼 배경 — 검정 55% 고정(흰 아이콘 대비용, 라이트/다크 공통)
+        public static let thumbDeleteButtonBackground = Color(nsColor: NSColor(white: 0, alpha: 0.55))
     }
 
     // MARK: - Radius
