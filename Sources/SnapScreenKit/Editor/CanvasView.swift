@@ -43,7 +43,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     /// 시스템 커서라 드래그 중에도 마우스를 따라 이동한다.
     private lazy var eraserNSCursor: NSCursor = {
         let config = NSImage.SymbolConfiguration(pointSize: 18, weight: .bold)
-        guard let symbol = NSImage(systemSymbolName: "eraser.fill", accessibilityDescription: "지우개")?
+        guard let symbol = NSImage(systemSymbolName: "eraser.fill", accessibilityDescription: L("Eraser"))?
             .withSymbolConfiguration(config) else {
             return .arrow
         }
@@ -506,18 +506,18 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
 
         let confirm = NSButton(frame: CGRect(x: viewMaxX - size * 2 - gap,
                                              y: viewMinY + gap, width: size, height: size))
-        confirm.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: "자르기 확정")
+        confirm.image = NSImage(systemSymbolName: "checkmark", accessibilityDescription: L("Confirm Crop"))
         confirm.target = self
         confirm.action = #selector(cropConfirmClicked)
-        confirm.toolTip = "자르기 (⏎)"
+        confirm.toolTip = L("Crop (⏎)")
         styleCropButton(confirm, background: NSColor.systemGreen.withAlphaComponent(0.8))
 
         let cancel = NSButton(frame: CGRect(x: viewMaxX - size, y: viewMinY + gap,
                                             width: size, height: size))
-        cancel.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "자르기 취소")
+        cancel.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: L("Cancel Crop"))
         cancel.target = self
         cancel.action = #selector(cropCancelClicked)
-        cancel.toolTip = "취소 (esc)"
+        cancel.toolTip = L("Cancel (esc)")
         styleCropButton(cancel, background: NSColor.systemRed.withAlphaComponent(0.8))
 
         addSubview(confirm); addSubview(cancel)

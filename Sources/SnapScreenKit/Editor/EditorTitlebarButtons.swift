@@ -24,16 +24,16 @@ public struct EditorTitlebarButtons: View {
             Button(action: onUndo) { Image(systemName: "arrow.uturn.backward") }
                 .buttonStyle(.plain)
                 .disabled(!store.canUndo).opacity(store.canUndo ? 1 : 0.35)
-                .help("실행 취소 (⌘Z)")
+                .help(L("Undo (⌘Z)"))
             Button(action: onRedo) { Image(systemName: "arrow.uturn.forward") }
                 .buttonStyle(.plain)
                 .disabled(!store.canRedo).opacity(store.canRedo ? 1 : 0.35)
-                .help("실행 복귀 (⇧⌘Z)")
-            Button(action: onCopy) { Text("복사").font(.system(size: 12)) }
-                .help("클립보드로 복사 (⌘C)")
-            Button(action: onSave) { Text("저장").font(.system(size: 12, weight: .semibold)) }
+                .help(L("Redo (⇧⌘Z)"))
+            Button(action: onCopy) { Text(L("Copy")).font(.system(size: 12)) }
+                .help(L("Copy to Clipboard (⌘C)"))
+            Button(action: onSave) { Text(L("Save")).font(.system(size: 12, weight: .semibold)) }
                 .buttonStyle(.borderedProminent)
-                .help("파일로 저장 (⌘S)")
+                .help(L("Save to File (⌘S)"))
         }
         .padding(.horizontal, 12)
     }

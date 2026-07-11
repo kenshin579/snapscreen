@@ -162,7 +162,7 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     @objc public func copyMerged(_ sender: Any?) {
         guard let image = flattened() else { return }
         if ClipboardWriter.write(image, scale: result.scale) {
-            canvas.showToast("이미지를 복사했습니다")
+            canvas.showToast(L("Image copied"))
         }
     }
 
@@ -172,10 +172,10 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
         case .saved:
             window?.close()
         case .savedToFallback(let url):
-            Notifier.show(title: "저장 위치 폴백", body: "데스크탑에 저장했습니다: \(url.lastPathComponent)")
+            Notifier.show(title: L("Save Location Fallback"), body: L("Saved to Desktop: \(url.lastPathComponent)"))
             window?.close()
         case .failed(let error):
-            Notifier.alertFailure(title: "저장 실패", body: error.localizedDescription)
+            Notifier.alertFailure(title: L("Save Failed"), body: error.localizedDescription)
         }
     }
 
@@ -187,12 +187,12 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
             self.isRecognizing = false
             switch result {
             case .success(let text) where text.isEmpty:
-                self.canvas.showToast("인식된 텍스트가 없습니다")
+                self.canvas.showToast(L("No text recognized"))
             case .success(let text):
                 ClipboardWriter.write(text: text)
-                self.canvas.showToast("\(text.count)자를 복사했습니다")
+                self.canvas.showToast(L("Copied \(text.count) characters"))
             case .failure(let error):
-                Notifier.alertFailure(title: "OCR 실패", body: error.localizedDescription)
+                Notifier.alertFailure(title: L("OCR Failed"), body: error.localizedDescription)
             }
         }
     }

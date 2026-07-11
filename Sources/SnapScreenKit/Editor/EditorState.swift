@@ -7,15 +7,15 @@ public enum EditorTool: String, CaseIterable, Identifiable {
 
     public var label: String {
         switch self {
-        case .arrow: return "화살표"
-        case .rectangle: return "사각형"
-        case .ellipse: return "원"
-        case .text: return "텍스트"
-        case .blur: return "블러 (시각적 완화용 — 민감정보는 모자이크 사용)"
-        case .pixelate: return "모자이크 (민감정보 가리기)"
-        case .stepBadge: return "번호"
-        case .pen: return "펜"
-        case .eraser: return "지우개"
+        case .arrow: return L("Arrow")
+        case .rectangle: return L("Rectangle")
+        case .ellipse: return L("Ellipse")
+        case .text: return L("Text")
+        case .blur: return L("Blur (visual softening — use Pixelate for sensitive info)")
+        case .pixelate: return L("Pixelate (hide sensitive info)")
+        case .stepBadge: return L("Number")
+        case .pen: return L("Pen")
+        case .eraser: return L("Eraser")
         }
     }
 

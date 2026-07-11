@@ -18,7 +18,7 @@ public struct InspectorView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
-                sectionLabel("색상")
+                sectionLabel(L("Color"))
                 LazyVGrid(columns: columns, spacing: 6) {
                     ForEach(PaletteColor.allCases, id: \.self) { swatch($0) }
                 }
@@ -26,7 +26,7 @@ public struct InspectorView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    sectionLabel("선 굵기")
+                    sectionLabel(L("Line Width"))
                     Spacer()
                     Text("\(Int(state.lineWidth))px")
                         .font(.system(size: 11)).monospacedDigit()
@@ -36,7 +36,7 @@ public struct InspectorView: View {
             }
 
             HStack {
-                Text("그림자").font(.system(size: 12))
+                Text(L("Shadow")).font(.system(size: 12))
                 Spacer()
                 Toggle("", isOn: $state.shadowEnabled).labelsHidden()
                     .toggleStyle(.switch)
@@ -46,9 +46,9 @@ public struct InspectorView: View {
             Divider()
 
             VStack(alignment: .leading, spacing: 6) {
-                sectionLabel("빠른 작업")
-                quickButton("텍스트 추출", action: onOCR)
-                quickButton("자르기", action: onCrop)
+                sectionLabel(L("Quick Actions"))
+                quickButton(L("Extract Text"), action: onOCR)
+                quickButton(L("Crop"), action: onCrop)
             }
 
             Spacer()
