@@ -1,9 +1,45 @@
 import SwiftUI
-import KeyboardShortcuts
+import AppKit
 
+/// 설정 섹션 (사이드바 네비게이션).
+enum SettingsSection: CaseIterable {
+    case shortcuts, saving, history, about
+
+    var label: String {
+        switch self {
+        case .shortcuts: return "단축키"
+        case .saving: return "저장"
+        case .history: return "히스토리"
+        case .about: return "정보"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .shortcuts: return "keyboard"
+        case .saving: return "folder.fill"
+        case .history: return "clock.fill"
+        case .about: return "info.circle"
+        }
+    }
+
+    var iconTileColor: Color {
+        switch self {
+        case .shortcuts: return Color(nsColor: NSColor(hex: 0x007AFF))
+        case .saving: return Color(nsColor: NSColor(hex: 0x34C759))
+        case .history: return Color(nsColor: NSColor(hex: 0x8E8E93))
+        case .about: return DesignTokens.dynamic(light: NSColor(hex: 0x636366),
+                                                 dark: NSColor(hex: 0x48484A))
+        }
+    }
+}
+
+/// 설정 창 내용: 사이드바 2-pane (190pt 사이드바 + 카드 기반 콘텐츠).
 public struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
     @ObservedObject var updateState: UpdateState
+    @State private var section: SettingsSection = .shortcuts
+    @State private var hovered: SettingsSection?
 
     public init(settings: SettingsStore, updateState: UpdateState) {
         self.settings = settings
@@ -11,111 +47,68 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        Form {
-            Section("단축키") {
-                KeyboardShortcuts.Recorder("영역 캡처:", name: .captureArea)
-                KeyboardShortcuts.Recorder("창 캡처:", name: .captureWindow)
-                KeyboardShortcuts.Recorder("전체 화면 캡처:", name: .captureFullScreen)
-            }
-            Section("저장") {
-                HStack {
-                    Text("저장 폴더:")
-                    Text(settings.saveFolderOverride ?? "시스템 스크린샷 위치 따름")
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                    Spacer()
-                    Button("변경…") { pickFolder() }
-                    if settings.saveFolderOverride != nil {
-                        Button("기본값") { settings.saveFolderOverride = nil }
-                    }
-                }
-                TextField("파일명 접두어:", text: $settings.filenamePrefix)
-            }
-            Section("히스토리") {
-                Picker("보관 개수", selection: $settings.historyLimit) {
-                    ForEach([20, 50, 100, 200], id: \.self) { Text("\($0)개").tag($0) }
+        HStack(spacing: 0) {
+            sidebar
+
+            Group {
+                switch section {
+                case .shortcuts: ShortcutsPane()
+                case .saving: SavingPane(settings: settings)
+                case .history: HistoryPane(settings: settings)
+                case .about: AboutPane(updateState: updateState)
                 }
             }
-            Section("정보") {
-                LabeledContent("버전", value: AppInfo.version)
-                HStack {
-                    updateStatusText
-                    Spacer()
-                    Button("업데이트 확인") {
-                        Task { await updateState.check() }
-                    }
-                    .disabled(updateState.phase == .checking || updateState.phase == .installing)
-                    if case .available(let version, let downloadURL) = updateState.phase {
-                        Button("업그레이드") {
-                            upgrade(version: version, downloadURL: downloadURL)
-                        }
-                    } else if updateState.phase == .installing {
-                        Button("다운로드 중…") {}.disabled(true)
-                    }
-                }
-            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .formStyle(.grouped)
-        .frame(width: 440)
-        .fixedSize(horizontal: false, vertical: true)
+        .frame(width: 620, height: 430)
     }
 
-    @ViewBuilder
-    private var updateStatusText: some View {
-        switch updateState.phase {
-        case .idle:
-            Text("최신 버전: 미확인").foregroundStyle(.secondary)
-        case .checking:
-            Text("확인 중…").foregroundStyle(.secondary)
-        case .upToDate:
-            Text("최신 버전입니다 ✓").foregroundStyle(.secondary)
-        case .available(let version, _):
-            Text("v\(version) 사용 가능").fontWeight(.medium)
-        case .installing:
-            Text("설치 중…").foregroundStyle(.secondary)
-        case .failed(let message):
-            Text(message).foregroundStyle(.red)
-        }
-    }
+    // MARK: - 사이드바
 
-    private func upgrade(version: String, downloadURL: URL) {
-        updateState.phase = .installing
-        Task {
-            if let errorMessage = await UpdateInstaller.install(version: version,
-                                                                downloadURL: downloadURL) {
-                if errorMessage == UpdateInstaller.relaunchFailedMessage {
-                    updateState.phase = .idle
-                    let alert = NSAlert()
-                    alert.messageText = "업데이트 완료"
-                    alert.informativeText = errorMessage
-                    alert.addButton(withTitle: "확인")
-                    NSApp.activate(ignoringOtherApps: true)
-                    alert.runModal()
-                } else {
-                    updateState.phase = .failed(errorMessage)
-                    let alert = NSAlert()
-                    alert.messageText = "업데이트 실패"
-                    alert.informativeText = errorMessage + "\n릴리스 페이지에서 수동으로 설치할 수 있습니다."
-                    alert.addButton(withTitle: "릴리스 페이지 열기")
-                    alert.addButton(withTitle: "닫기")
-                    NSApp.activate(ignoringOtherApps: true)
-                    if alert.runModal() == .alertFirstButtonReturn {
-                        NSWorkspace.shared.open(UpdateChecker.releasesPageURL)
-                    }
-                }
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Spacer().frame(height: 40) // 트래픽 라이트 영역
+            ForEach(SettingsSection.allCases, id: \.self) { s in
+                sidebarRow(s)
             }
-            // 성공 시 앱이 종료·재실행되므로 후속 코드 없음
+            Spacer()
+            Text("v\(AppInfo.version)")
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(.tertiary)
+                .padding(.leading, 9)
         }
+        .padding(.horizontal, 10)
+        .padding(.bottom, 12)
+        .frame(width: 190)
+        .frame(maxHeight: .infinity)
+        .background(DesignTokens.Colors.settingsSidebar)
+        .overlay(alignment: .trailing) { DesignTokens.Colors.hairline.frame(width: 1) }
     }
 
-    private func pickFolder() {
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = false
-        panel.canChooseDirectories = true
-        panel.allowsMultipleSelection = false
-        if panel.runModal() == .OK, let url = panel.url {
-            settings.saveFolderOverride = url.path
+    private func sidebarRow(_ s: SettingsSection) -> some View {
+        Button { section = s } label: {
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: DesignTokens.Radius.iconTile)
+                    .fill(s.iconTileColor)
+                    .frame(width: 22, height: 22)
+                    .overlay(Image(systemName: s.symbol)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white))
+                Text(s.label)
+                    .font(.system(size: 12.5))
+                    .foregroundStyle(section == s ? Color.white : Color.primary)
+                Spacer()
+            }
+            .padding(.vertical, 7)
+            .padding(.horizontal, 9)
+            .background(RoundedRectangle(cornerRadius: DesignTokens.Radius.sidebarRow)
+                .fill(section == s ? Color.accentColor
+                      : (hovered == s ? Color.primary.opacity(0.06) : Color.clear)))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            if hovering { hovered = s }
+            else if hovered == s { hovered = nil }
         }
     }
 }

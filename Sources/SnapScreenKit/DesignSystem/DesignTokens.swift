@@ -53,6 +53,16 @@ public enum DesignTokens {
             dark: NSColor(white: 1, alpha: 0.08))
         /// 썸네일 hover 삭제 버튼 배경 — 검정 55% 고정(흰 아이콘 대비용, 라이트/다크 공통)
         public static let thumbDeleteButtonBackground = Color(nsColor: NSColor(white: 0, alpha: 0.55))
+
+        // MARK: 설정 화면 고유
+        /// 설정 사이드바 배경 — 라이트 #ECECF0 90% / 다크 #1C1C1F 90%
+        public static let settingsSidebar = dynamic(
+            light: NSColor(hex: 0xECECF0, alpha: 0.9),
+            dark: NSColor(hex: 0x1C1C1F, alpha: 0.9))
+        /// 설정 grouped 카드 배경 — 라이트 흰색 / 다크 흰색 5.5%
+        public static let settingsCard = dynamic(
+            light: .white,
+            dark: NSColor(white: 1, alpha: 0.055))
     }
 
     // MARK: - Radius
