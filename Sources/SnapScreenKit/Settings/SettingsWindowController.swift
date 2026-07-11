@@ -12,7 +12,10 @@ public final class SettingsWindowController: NSWindowController, NSWindowDelegat
                                                                  updateState: updateState))
         let window = NSWindow(contentViewController: hosting)
         window.title = "SnapScreen 설정"
-        window.styleMask = [.titled, .closable]
+        // 인라인 타이틀바 — 트래픽 라이트가 사이드바 위에 얹힌다 (System Settings 스타일)
+        window.styleMask = [.titled, .closable, .fullSizeContentView]
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
         window.isReleasedWhenClosed = false
         super.init(window: window)
         window.delegate = self
