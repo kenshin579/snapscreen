@@ -22,7 +22,6 @@ public final class HomeWindowController: NSWindowController, NSWindowDelegate {
         window.styleMask = [.titled, .closable, .miniaturizable, .fullSizeContentView]
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
         super.init(window: window)
         window.delegate = self
