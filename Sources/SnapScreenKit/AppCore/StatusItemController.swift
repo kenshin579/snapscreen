@@ -7,6 +7,7 @@ public final class StatusItemController: NSObject {
     private let coordinator: CaptureCoordinator
     private let openHomeHandler: () -> Void
     private let openSettingsHandler: () -> Void
+    private let openSettingsAboutHandler: () -> Void
     private let updateState: UpdateState
     private var updateMenuItem: NSMenuItem?
     private var updateSeparator: NSMenuItem?
@@ -14,11 +15,13 @@ public final class StatusItemController: NSObject {
 
     public init(coordinator: CaptureCoordinator, updateState: UpdateState,
                 openHome: @escaping () -> Void,
-                openSettings: @escaping () -> Void) {
+                openSettings: @escaping () -> Void,
+                openSettingsAbout: @escaping () -> Void) {
         self.coordinator = coordinator
         self.updateState = updateState
         self.openHomeHandler = openHome
         self.openSettingsHandler = openSettings
+        self.openSettingsAboutHandler = openSettingsAbout
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
 
@@ -55,7 +58,7 @@ public final class StatusItemController: NSObject {
 
         guard case .available(let version, _) = phase else { return }
         let item = NSMenuItem(title: L("Update available (v\(version))…"),
-                              action: #selector(StatusItemController.openSettings),
+                              action: #selector(StatusItemController.openUpdateSettings),
                               keyEquivalent: "")
         item.target = self
         let separator = NSMenuItem.separator()
@@ -70,5 +73,7 @@ public final class StatusItemController: NSObject {
     @objc private func captureFullScreen() { coordinator.beginCapture(.fullScreen) }
     @objc private func openHome() { openHomeHandler() }
     @objc private func openSettings() { openSettingsHandler() }
+    /// 업데이트 메뉴 항목 → 설정 About 섹션 직행 (Upgrade 버튼이 바로 보이게)
+    @objc private func openUpdateSettings() { openSettingsAboutHandler() }
     @objc private func quit() { NSApp.terminate(nil) }
 }

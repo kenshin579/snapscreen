@@ -4,12 +4,14 @@ import SwiftUI
 @MainActor
 public final class SettingsWindowController: NSWindowController, NSWindowDelegate {
     private let policyManager: ActivationPolicyManager?
+    private let uiState = SettingsUIState()
 
     public init(settings: SettingsStore, updateState: UpdateState,
                 policyManager: ActivationPolicyManager? = nil) {
         self.policyManager = policyManager
         let hosting = NSHostingController(rootView: SettingsView(settings: settings,
-                                                                 updateState: updateState))
+                                                                 updateState: updateState,
+                                                                 ui: uiState))
         let window = NSWindow(contentViewController: hosting)
         window.title = L("SnapScreen Settings")
         // 인라인 타이틀바 — 트래픽 라이트가 사이드바 위에 얹힌다 (System Settings 스타일)
@@ -23,7 +25,10 @@ public final class SettingsWindowController: NSWindowController, NSWindowDelegat
 
     required init?(coder: NSCoder) { fatalError() }
 
-    public func show() {
+    /// 설정 창 표시. section 지정 시 해당 섹션으로 전환해 연다
+    /// (예: 메뉴바 "Update available…" → About 직행). nil이면 마지막 섹션 유지.
+    func show(section: SettingsSection? = nil) {
+        if let section { uiState.section = section }
         guard let window else { return }
         policyManager?.register(window)
         window.center()

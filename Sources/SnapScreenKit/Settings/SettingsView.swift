@@ -34,16 +34,23 @@ enum SettingsSection: CaseIterable {
     }
 }
 
+/// 선택된 설정 섹션 — 창 컨트롤러가 소유해 외부에서 특정 섹션으로 열 수 있게 한다
+/// (예: 메뉴바 "Update available…" 클릭 → About 직행).
+final class SettingsUIState: ObservableObject {
+    @Published var section: SettingsSection = .shortcuts
+}
+
 /// 설정 창 내용: 사이드바 2-pane (190pt 사이드바 + 카드 기반 콘텐츠).
 public struct SettingsView: View {
     @ObservedObject var settings: SettingsStore
     @ObservedObject var updateState: UpdateState
-    @State private var section: SettingsSection = .shortcuts
+    @ObservedObject var ui: SettingsUIState
     @State private var hovered: SettingsSection?
 
-    public init(settings: SettingsStore, updateState: UpdateState) {
+    init(settings: SettingsStore, updateState: UpdateState, ui: SettingsUIState) {
         self.settings = settings
         self.updateState = updateState
+        self.ui = ui
     }
 
     public var body: some View {
@@ -51,7 +58,7 @@ public struct SettingsView: View {
             sidebar
 
             Group {
-                switch section {
+                switch ui.section {
                 case .shortcuts: ShortcutsPane()
                 case .saving: SavingPane(settings: settings)
                 case .history: HistoryPane(settings: settings)
@@ -86,7 +93,7 @@ public struct SettingsView: View {
     }
 
     private func sidebarRow(_ s: SettingsSection) -> some View {
-        Button { section = s } label: {
+        Button { ui.section = s } label: {
             HStack(spacing: 8) {
                 RoundedRectangle(cornerRadius: DesignTokens.Radius.iconTile)
                     .fill(s.iconTileColor)
@@ -96,13 +103,13 @@ public struct SettingsView: View {
                         .foregroundStyle(.white))
                 Text(s.label)
                     .font(.system(size: 12.5))
-                    .foregroundStyle(section == s ? Color.white : Color.primary)
+                    .foregroundStyle(ui.section == s ? Color.white : Color.primary)
                 Spacer()
             }
             .padding(.vertical, 7)
             .padding(.horizontal, 9)
             .background(RoundedRectangle(cornerRadius: DesignTokens.Radius.sidebarRow)
-                .fill(section == s ? Color.accentColor
+                .fill(ui.section == s ? Color.accentColor
                       : (hovered == s ? Color.primary.opacity(0.06) : Color.clear)))
         }
         .buttonStyle(.plain)
