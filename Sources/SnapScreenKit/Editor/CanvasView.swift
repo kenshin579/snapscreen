@@ -69,7 +69,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
     }()
 
     /// 캡처 배율 기준 기본 크기 (Retina에서 주석이 너무 얇아지지 않게)
-    private var defaultLineWidth: CGFloat { 3 * captureScale }
+    private var defaultLineWidth: CGFloat { state.lineWidth * captureScale }
     private var defaultFontSize: CGFloat { 16 * captureScale }
     private var badgeRadius: CGFloat { 14 * captureScale }
 
@@ -120,7 +120,7 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
                     result.append(a)
                 } else {
                     for seg in segments {
-                        result.append(Annotation(kind: .path(seg), color: a.color, lineWidth: a.lineWidth))
+                        result.append(Annotation(kind: .path(seg), color: a.color, lineWidth: a.lineWidth, shadowEnabled: a.shadowEnabled))
                     }
                 }
             } else {
@@ -144,13 +144,20 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
 
     public override func draw(_ dirtyRect: NSRect) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
-        NSColor.windowBackgroundColor.setFill()
-        bounds.fill()
+        // 중립 배경 (radial 그라디언트)
+        let bg = canvasBackgroundGradient()
+        bg.draw(in: bounds, relativeCenterPosition: .zero)
+
         ctx.saveGState()
         ctx.translateBy(x: fitOffset.x, y: fitOffset.y)
         ctx.scaleBy(x: fitScale, y: fitScale)
         ctx.interpolationQuality = .high
+        // 이미지 드롭섀도 — 이미지 알파 모양을 따라. 파라미터는 스케일된 CTM 기준이라 fitScale로 나눠 화면 픽셀 기준 유지.
+        let fs = max(fitScale, 0.0001)
+        ctx.setShadow(offset: CGSize(width: 0, height: -3 / fs), blur: 16 / fs,
+                      color: NSColor(white: 0, alpha: 0.28).cgColor)
         ctx.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        ctx.setShadow(offset: .zero, blur: 0, color: nil)   // 이후 주석은 이미지 그림자 상속 안 함
         let toRender = (eraseCenters != nil) ? erasePreview : store.annotations
         for annotation in toRender {
             if case .moving(let id, _, let total) = dragMode, annotation.id == id {
@@ -163,6 +170,19 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         }
         drawOverlays(in: ctx)
         ctx.restoreGState()
+    }
+
+    /// 중립 캔버스 배경. 시스템 외관(라이트/다크)에 따라 색을 분기.
+    private func canvasBackgroundGradient() -> NSGradient {
+        let dark = effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
+        let start = dark ? NSColor(hex: 0x2C3240) : NSColor(hex: 0xE3E6EC)
+        let end   = dark ? NSColor(hex: 0x1F2229) : NSColor(hex: 0xD3D7DF)
+        return NSGradient(starting: start, ending: end) ?? NSGradient(starting: .windowBackgroundColor, ending: .windowBackgroundColor)!
+    }
+
+    public override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        needsDisplay = true   // 라이트/다크 전환 시 배경 갱신
     }
 
     func drawOverlays(in ctx: CGContext) {
@@ -236,11 +256,13 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         case .stepBadge:
             store.add(Annotation(kind: .stepBadge(center: p, number: store.nextStepNumber,
                                                   radius: badgeRadius),
-                                 color: state.color, lineWidth: defaultLineWidth))
+                                 color: state.color, lineWidth: defaultLineWidth,
+                                 shadowEnabled: state.shadowEnabled))
             needsDisplay = true
         case .pen:
             penPoints = [p]
-            draft = Annotation(kind: .path([p]), color: state.color, lineWidth: defaultLineWidth)
+            draft = Annotation(kind: .path([p]), color: state.color, lineWidth: defaultLineWidth,
+                              shadowEnabled: state.shadowEnabled)
         default:
             dragMode = .drawing(start: p)
         }
@@ -348,7 +370,8 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         case .blur: kind = .blur(rect)
         case .text, .stepBadge, .pen, .eraser: kind = .rectangle(rect) // 도달하지 않음 (mouseDown에서 처리)
         }
-        return Annotation(kind: kind, color: state.color, lineWidth: defaultLineWidth)
+        return Annotation(kind: kind, color: state.color, lineWidth: defaultLineWidth,
+                          shadowEnabled: state.shadowEnabled)
     }
 
     // MARK: - Keyboard
@@ -572,7 +595,8 @@ public final class CanvasView: NSView, NSTextFieldDelegate {
         if !string.isEmpty {
             store.add(Annotation(kind: .text(origin: origin, string: string,
                                              fontSize: defaultFontSize),
-                                 color: state.color, lineWidth: defaultLineWidth))
+                                 color: state.color, lineWidth: defaultLineWidth,
+                                 shadowEnabled: state.shadowEnabled))
         }
         window?.makeFirstResponder(self)
         needsDisplay = true
