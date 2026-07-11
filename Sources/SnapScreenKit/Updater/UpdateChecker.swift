@@ -48,7 +48,7 @@ public enum UpdateChecker {
         do {
             release = try JSONDecoder().decode(GitHubRelease.self, from: releaseJSON)
         } catch {
-            return .failed("릴리스 정보를 해석하지 못했습니다")
+            return .failed(L("Failed to parse release information"))
         }
         let latest = release.tagName.hasPrefix("v")
             ? String(release.tagName.dropFirst()) : release.tagName
@@ -56,7 +56,7 @@ public enum UpdateChecker {
         guard let asset = release.assets.first(where: {
             $0.name.hasPrefix("SnapScreen-") && $0.name.hasSuffix(".zip")
         }) else {
-            return .failed("릴리스에 zip 에셋이 없습니다")
+            return .failed(L("No zip asset in release"))
         }
         return .available(version: latest, downloadURL: asset.browserDownloadURL)
     }
@@ -69,11 +69,11 @@ public enum UpdateChecker {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                return .failed("업데이트 확인 실패 (HTTP)")
+                return .failed(L("Update check failed (HTTP)"))
             }
             return status(currentVersion: currentVersion, releaseJSON: data)
         } catch {
-            return .failed("업데이트 확인 실패 (네트워크)")
+            return .failed(L("Update check failed (network)"))
         }
     }
 }

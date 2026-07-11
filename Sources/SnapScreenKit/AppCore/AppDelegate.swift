@@ -35,7 +35,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                 if let image = self.historyStore.loadImage(id: entry.id) {
                     coordinator.openFromHistory(image: image, scale: entry.scale, entryID: entry.id)
                 } else {
-                    Notifier.show(title: "열 수 없음", body: "원본 파일을 찾지 못했습니다")
+                    Notifier.show(title: L("Cannot Open"), body: L("Original file not found"))
                     self.historyStore.remove(id: entry.id)
                 }
             },
@@ -57,8 +57,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         let lastRunKey = "lastRunVersion"
         let lastRun = UserDefaults.standard.string(forKey: lastRunKey)
         if let lastRun, lastRun != AppInfo.version {
-            Notifier.show(title: "SnapScreen \(AppInfo.version)(으)로 업데이트됨",
-                          body: "화면 기록 권한을 다시 켜야 할 수 있습니다.")
+            Notifier.show(title: L("Updated to SnapScreen \(AppInfo.version)"),
+                          body: L("You may need to re-enable Screen Recording permission."))
         }
         UserDefaults.standard.set(AppInfo.version, forKey: lastRunKey)
     }

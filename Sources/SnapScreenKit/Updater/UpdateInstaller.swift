@@ -7,7 +7,7 @@ public enum UpdateInstaller {
     /// 번들 교체는 성공했으나 자동 재실행 프로세스 기동에 실패한 경우 반환되는 메시지.
     /// (교체는 성공했으므로 "실패"가 아니라 안내로 표시해야 한다)
     public static let relaunchFailedMessage =
-        "업데이트는 완료되었습니다. 앱이 자동으로 재실행되지 않으면 수동으로 실행해 주세요."
+        L("The update is complete. If the app doesn't relaunch automatically, please launch it manually.")
 
     public static func install(version: String, downloadURL: URL) async -> String? {
         let fm = FileManager.default
@@ -19,7 +19,7 @@ public enum UpdateInstaller {
             // 1. 다운로드
             let (downloaded, response) = try await URLSession.shared.download(from: downloadURL)
             guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
-                return "다운로드 실패 (HTTP)"
+                return L("Download failed (HTTP)")
             }
             let zip = workDir.appendingPathComponent("update.zip")
             try fm.moveItem(at: downloaded, to: zip)
@@ -33,7 +33,7 @@ public enum UpdateInstaller {
             let plistURL = newApp.appendingPathComponent("Contents/Info.plist")
             guard let plist = NSDictionary(contentsOf: plistURL),
                   plist["CFBundleShortVersionString"] as? String == version else {
-                return "다운로드한 앱 검증에 실패했습니다"
+                return L("Downloaded app failed validation")
             }
 
             // 4. 번들 교체 (실행 중 rename은 macOS에서 허용)
@@ -42,16 +42,16 @@ public enum UpdateInstaller {
             do {
                 try fm.moveItem(at: currentURL, to: backupURL)
             } catch {
-                return "앱 교체에 실패했습니다 (설치 폴더 권한 확인): \(error.localizedDescription)"
+                return L("Failed to replace app (check install folder permissions): \(error.localizedDescription)")
             }
             do {
                 try fm.moveItem(at: newApp, to: currentURL)
             } catch {
                 do {
                     try fm.moveItem(at: backupURL, to: currentURL) // 롤백
-                    return "앱 교체에 실패했습니다 (설치 폴더 권한 확인): \(error.localizedDescription)"
+                    return L("Failed to replace app (check install folder permissions): \(error.localizedDescription)")
                 } catch {
-                    return "앱 교체 중 오류가 발생했고 복구도 실패했습니다. 이전 버전이 다음 위치에 있습니다: \(backupURL.path)"
+                    return L("An error occurred while replacing the app and recovery also failed. The previous version is at: \(backupURL.path)")
                 }
             }
 
@@ -67,7 +67,7 @@ public enum UpdateInstaller {
             NSApp.terminate(nil)
             return nil // 도달하지 않음
         } catch {
-            return "업데이트 실패: \(error.localizedDescription)"
+            return L("Update failed: \(error.localizedDescription)")
         }
     }
 
@@ -84,7 +84,7 @@ public enum UpdateInstaller {
                                 encoding: .utf8) ?? ""
             throw NSError(domain: "UpdateInstaller", code: Int(process.terminationStatus),
                           userInfo: [NSLocalizedDescriptionKey:
-                                        "\(path) 종료 코드 \(process.terminationStatus): \(stderr.prefix(200))"])
+                                        L("\(path) exited with code \(Int(process.terminationStatus)): \(String(stderr.prefix(200)))")])
         }
     }
 }

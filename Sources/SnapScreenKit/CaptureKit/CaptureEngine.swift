@@ -11,7 +11,7 @@ public enum CaptureError: LocalizedError {
     case displayNotFound
     public var errorDescription: String? {
         switch self {
-        case .displayNotFound: return "캡처할 디스플레이를 찾지 못했습니다."
+        case .displayNotFound: return L("Could not find the display to capture.")
         }
     }
 }
