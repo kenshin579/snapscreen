@@ -38,7 +38,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
                     Notifier.show(title: "열 수 없음", body: "원본 파일을 찾지 못했습니다")
                     self.historyStore.remove(id: entry.id)
                 }
-            })
+            },
+            onOpenSettings: { [weak self] in self?.openSettings(nil) })
         homeWindowController?.show()
 
         statusItemController = StatusItemController(
