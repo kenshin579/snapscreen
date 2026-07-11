@@ -24,9 +24,9 @@ public struct ToolRailView: View {
             }
             Spacer()
             railButton(symbol: "crop",
-                       help: store.annotations.isEmpty ? "자르기 (C)" : "주석을 모두 삭제한 후 자를 수 있습니다",
+                       help: store.annotations.isEmpty ? L("Crop (C)") : L("Delete all annotations to crop"),
                        selected: false, disabled: !store.annotations.isEmpty, action: onCrop)
-            railButton(symbol: "text.viewfinder", help: "텍스트 추출 (E)",
+            railButton(symbol: "text.viewfinder", help: L("Extract Text (E)"),
                        selected: false, action: onOCR)
         }
         .padding(.vertical, 10)

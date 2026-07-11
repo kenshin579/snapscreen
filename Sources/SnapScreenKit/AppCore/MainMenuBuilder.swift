@@ -6,25 +6,25 @@ public enum MainMenuBuilder {
         let main = NSMenu()
 
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "설정…", action: Selector(("openSettings:")), keyEquivalent: ",")
+        appMenu.addItem(withTitle: L("Settings…"), action: Selector(("openSettings:")), keyEquivalent: ",")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "SnapScreen 종료",
+        appMenu.addItem(withTitle: L("Quit SnapScreen"),
                         action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         main.addItem(submenu(appMenu, title: "SnapScreen"))
 
-        let fileMenu = NSMenu(title: "파일")
-        fileMenu.addItem(withTitle: "저장…", action: Selector(("saveImage:")), keyEquivalent: "s")
-        fileMenu.addItem(withTitle: "닫기", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
-        main.addItem(submenu(fileMenu, title: "파일"))
+        let fileMenu = NSMenu(title: L("File"))
+        fileMenu.addItem(withTitle: L("Save…"), action: Selector(("saveImage:")), keyEquivalent: "s")
+        fileMenu.addItem(withTitle: L("Close"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        main.addItem(submenu(fileMenu, title: L("File")))
 
-        let editMenu = NSMenu(title: "편집")
-        editMenu.addItem(withTitle: "실행 취소", action: Selector(("undoAction:")), keyEquivalent: "z")
-        let redo = NSMenuItem(title: "실행 복귀", action: Selector(("redoAction:")), keyEquivalent: "z")
+        let editMenu = NSMenu(title: L("Edit"))
+        editMenu.addItem(withTitle: L("Undo"), action: Selector(("undoAction:")), keyEquivalent: "z")
+        let redo = NSMenuItem(title: L("Redo"), action: Selector(("redoAction:")), keyEquivalent: "z")
         redo.keyEquivalentModifierMask = [.command, .shift]
         editMenu.addItem(redo)
         editMenu.addItem(.separator())
-        editMenu.addItem(withTitle: "복사", action: Selector(("copyMerged:")), keyEquivalent: "c")
-        main.addItem(submenu(editMenu, title: "편집"))
+        editMenu.addItem(withTitle: L("Copy"), action: Selector(("copyMerged:")), keyEquivalent: "c")
+        main.addItem(submenu(editMenu, title: L("Edit")))
 
         NSApp.mainMenu = main
     }

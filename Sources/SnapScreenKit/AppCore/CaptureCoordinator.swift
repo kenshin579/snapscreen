@@ -29,7 +29,7 @@ public final class CaptureCoordinator {
                     let result = try await self.engine.captureFullDisplay(containing: mouse)
                     self.handleCaptured(result)
                 } catch {
-                    Notifier.alertFailure(title: "캡처 실패", body: error.localizedDescription)
+                    Notifier.alertFailure(title: L("Capture Failed"), body: error.localizedDescription)
                 }
             }
         case .area:
@@ -51,7 +51,7 @@ public final class CaptureCoordinator {
                             rect: cgRect, displayID: displayID, scale: scale)
                         self.handleCaptured(result)
                     } catch {
-                        Notifier.alertFailure(title: "캡처 실패", body: error.localizedDescription)
+                        Notifier.alertFailure(title: L("Capture Failed"), body: error.localizedDescription)
                     }
                 }
             }
@@ -73,13 +73,13 @@ public final class CaptureCoordinator {
                                 let result = try await self.engine.captureWindow(target.window)
                                 self.handleCaptured(result)
                             } catch {
-                                Notifier.alertFailure(title: "캡처 실패", body: error.localizedDescription)
+                                Notifier.alertFailure(title: L("Capture Failed"), body: error.localizedDescription)
                             }
                         }
                     }
                 } catch {
                     self.isPickingWindow = false
-                    Notifier.alertFailure(title: "캡처 실패", body: error.localizedDescription)
+                    Notifier.alertFailure(title: L("Capture Failed"), body: error.localizedDescription)
                 }
             }
         }

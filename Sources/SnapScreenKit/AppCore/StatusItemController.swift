@@ -25,15 +25,15 @@ public final class StatusItemController: NSObject {
         statusItem.button?.image = NSImage(systemSymbolName: "camera.viewfinder",
                                            accessibilityDescription: "SnapScreen")
         let menu = NSMenu()
-        menu.addItem(item("SnapScreen 홈…", #selector(StatusItemController.openHome)))
+        menu.addItem(item(L("SnapScreen Home…"), #selector(StatusItemController.openHome)))
         menu.addItem(.separator())
-        menu.addItem(item("영역 캡처", #selector(captureArea)))
-        menu.addItem(item("창 캡처", #selector(captureWindow)))
-        menu.addItem(item("전체 화면 캡처", #selector(captureFullScreen)))
+        menu.addItem(item(L("Area Capture"), #selector(captureArea)))
+        menu.addItem(item(L("Window Capture"), #selector(captureWindow)))
+        menu.addItem(item(L("Full Screen Capture"), #selector(captureFullScreen)))
         menu.addItem(.separator())
-        menu.addItem(item("설정…", #selector(StatusItemController.openSettings)))
+        menu.addItem(item(L("Settings…"), #selector(StatusItemController.openSettings)))
         menu.addItem(.separator())
-        menu.addItem(item("SnapScreen 종료", #selector(quit)))
+        menu.addItem(item(L("Quit SnapScreen"), #selector(quit)))
         statusItem.menu = menu
 
         phaseCancellable = updateState.$phase.sink { [weak self] phase in
@@ -54,7 +54,7 @@ public final class StatusItemController: NSObject {
         if let sep = updateSeparator { menu.removeItem(sep); updateSeparator = nil }
 
         guard case .available(let version, _) = phase else { return }
-        let item = NSMenuItem(title: "업데이트 가능 (v\(version))…",
+        let item = NSMenuItem(title: L("Update available (v\(version))…"),
                               action: #selector(StatusItemController.openSettings),
                               keyEquivalent: "")
         item.target = self
