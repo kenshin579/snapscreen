@@ -91,16 +91,23 @@ public final class CaptureCoordinator {
     }
 
     /// 히스토리 항목을 편집기로 다시 연다(재기록 없음).
-    public func openFromHistory(image: CGImage, scale: CGFloat) {
-        openEditor(CaptureResult(image: image, scale: scale))
+    /// 같은 항목의 편집기가 이미 열려 있으면 새 창 대신 기존 창을 포커스한다.
+    public func openFromHistory(image: CGImage, scale: CGFloat, entryID: UUID) {
+        if let existing = editors.first(where: { $0.historyEntryID == entryID }) {
+            existing.window?.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        openEditor(CaptureResult(image: image, scale: scale), historyEntryID: entryID)
     }
 
-    private func openEditor(_ result: CaptureResult) {
+    private func openEditor(_ result: CaptureResult, historyEntryID: UUID? = nil) {
         // controller가 onClose 클로저를 통해 자신을 보유하는 순환은
         // windowWillClose에서 onClose = nil로 끊긴다
         var controller: EditorWindowController?
         controller = EditorWindowController(result: result, settings: settings,
-                                            policyManager: policyManager) { [weak self] in
+                                            policyManager: policyManager,
+                                            historyEntryID: historyEntryID) { [weak self] in
             self?.editors.removeAll { $0 === controller }
         }
         if let controller { editors.append(controller) }

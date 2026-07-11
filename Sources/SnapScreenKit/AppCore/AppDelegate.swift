@@ -33,7 +33,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
             onOpenEntry: { [weak coordinator, weak self] entry in
                 guard let coordinator, let self else { return }
                 if let image = self.historyStore.loadImage(id: entry.id) {
-                    coordinator.openFromHistory(image: image, scale: entry.scale)
+                    coordinator.openFromHistory(image: image, scale: entry.scale, entryID: entry.id)
                 } else {
                     Notifier.show(title: "열 수 없음", body: "원본 파일을 찾지 못했습니다")
                     self.historyStore.remove(id: entry.id)

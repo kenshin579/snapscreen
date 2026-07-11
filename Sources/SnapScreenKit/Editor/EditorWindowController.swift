@@ -14,17 +14,21 @@ public final class EditorWindowController: NSWindowController, NSWindowDelegate 
     private let policyManager: ActivationPolicyManager?
     private var toolCancellable: AnyCancellable?
     private var isRecognizing = false
+    /// 히스토리에서 연 경우 원본 항목 id — 같은 항목의 중복 창 방지(코디네이터가 조회). 새 캡처는 nil.
+    public let historyEntryID: UUID?
 
     private let railWidth: CGFloat = 52
     private let inspectorWidth: CGFloat = 170
 
     public init(result: CaptureResult, settings: SettingsStore,
                 policyManager: ActivationPolicyManager? = nil,
+                historyEntryID: UUID? = nil,
                 onClose: (() -> Void)? = nil) {
         self.result = result
         self.image = result.image
         self.settings = settings
         self.policyManager = policyManager
+        self.historyEntryID = historyEntryID
         self.onClose = onClose
 
         let pointSize = CGSize(width: CGFloat(result.image.width) / result.scale,
