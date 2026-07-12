@@ -2,87 +2,109 @@
 
 > SnapScreen — free, open-source screenshot capture & annotation tool for macOS.
 
-macOS용 스크린샷 캡처 + 주석 편집 도구입니다. 오픈소스이며, 실행하면 캡처 버튼이 있는 홈 창이 열리고 독(Dock) 아이콘이 나타납니다. 창을 모두 닫으면 독 아이콘이 사라지고 메뉴바에만 상주합니다.
+A screenshot capture and annotation tool for macOS. It is open source. When launched, a Home window with capture buttons opens and a Dock icon appears. When all windows are closed, the Dock icon disappears and the app lives in the menu bar.
 
-## 기능
+## Features
 
-- **홈 창**: 실행 시 자동으로 열리는 홈 창에서 영역 · 창 · 전체 화면 캡처 버튼을 바로 클릭할 수 있음 (단축키도 함께 표시)
-- **최근 캡처 갤러리**: 저장하지 않은 캡처도 홈 창에서 다시 열기(최근 50개), 가로로 넘겨보며 한 줄로 탐색 — 스크롤 가능할 때 좌우 화살표로도 넘길 수 있음
-- **캡처**: 전역 단축키로 영역(`⌘⇧1`) · 창(`⌘⇧2`) · 전체 화면(`⌘⇧0`) 캡처
-- **주석 편집기**: 화살표 · 사각형 · 원 · 텍스트 · 블러 · 모자이크 · 번호 배지 · 펜(자유곡선) · 지우개(자유곡선 부분 지우기·주석 삭제), 도구별 단축키(`A`/`R`/`O`/`T`/`G`/`B`/`N`/`P`/`X`)
-- **자르기(crop)**: 드래그로 이미지 영역을 잘라내기(`C`, 주석이 없을 때만) — 같은 창에서 이미지가 교체되고 창 크기가 새 비율에 맞게 조정됨
-- **OCR(텍스트 추출)**: 이미지의 텍스트를 인식해 클립보드로 복사(`E`)
-- **실행 취소 / 다시 실행**: `⌘Z` / `⇧⌘Z`
-- **내보내기**: 클립보드로 복사(`⌘C`), 파일로 저장(`⌘S`) — 복사·추출 시 편집기 내 토스트로 결과를 바로 확인
-- **저장 위치 연동**: macOS 시스템 스크린샷 저장 위치(`screencapture` 설정)를 자동으로 따름
-- **설정 창**: 단축키 변경, 저장 폴더, 파일명 접두어 커스터마이즈
-- **전용 앱 아이콘**: 캡처 스택 모티프의 바이올렛 그라디언트 아이콘 (Finder/Dock/⌘Tab)
+- **Home window**: Opens automatically on launch, letting you click the region / window / full-screen capture buttons directly (shortcuts are shown too).
+- **Recent captures gallery**: Reopen captures — even unsaved ones — from the Home window (last 50), browsed horizontally in a single row; when it's scrollable, left/right arrows also let you page through them.
+- **Capture**: Global shortcuts for region (`⌘⇧1`), window (`⌘⇧2`), and full-screen (`⌘⇧0`) capture.
+- **Annotation editor**: Arrow · rectangle · ellipse · text · blur · mosaic · number badge · pen (freehand) · eraser (partially erase freehand strokes / delete annotations), with per-tool shortcuts (`A`/`R`/`O`/`T`/`G`/`B`/`N`/`P`/`X`).
+- **Crop**: Drag to crop a region of the image (`C`, only when there are no annotations) — the image is replaced in the same window and the window resizes to the new aspect ratio.
+- **OCR (text extraction)**: Recognizes text in the image and copies it to the clipboard (`E`).
+- **Undo / Redo**: `⌘Z` / `⇧⌘Z`.
+- **Export**: Copy to clipboard (`⌘C`), save to file (`⌘S`) — an in-editor toast confirms the result right after a copy or extraction.
+- **Save-location sync**: Automatically follows the macOS system screenshot save location (`screencapture` setting).
+- **Settings window**: Customize shortcuts, save folder, and filename prefix.
+- **Dedicated app icon**: A violet-gradient icon with a capture-stack motif (Finder/Dock/⌘Tab).
 
-> 민감정보 가리기에는 **모자이크**를 사용하세요 — 약한 블러는 복원될 수 있습니다.
+> Use **mosaic** to hide sensitive information — weak blur can be reversed.
 
-## 요구 사항
+## Screenshots
 
-- macOS 14 (Sonoma) 이상
+All screenshots below were captured with SnapScreen itself.
 
-## 설치
+### Home window
 
-1. [GitHub Releases](https://github.com/kenshin579/snapscreen/releases)에서 최신 zip을 다운로드합니다.
-2. 압축을 해제하고 `SnapScreen.app`을 `Applications` 폴더로 이동합니다.
-3. 이 앱은 서명되지 않은(unsigned) 배포본이므로, 최초 실행 전 터미널에서 아래 명령을 실행해 격리 속성을 제거해야 합니다.
+Region / window / full-screen capture buttons and the recent captures gallery:
+
+![SnapScreen Home window with capture buttons and a recent captures gallery](docs/screenshots/home-window.png)
+
+### Annotation editor
+
+Tool rail on the left, canvas in the middle, and the color / line-width / quick-actions inspector on the right:
+
+![SnapScreen annotation editor with the tool rail and inspector panel](docs/screenshots/annotation-editor.png)
+
+### Settings
+
+Customize capture shortcuts, save folder, and history:
+
+![SnapScreen settings window showing the shortcuts pane](docs/screenshots/settings.png)
+
+## Requirements
+
+- macOS 14 (Sonoma) or later
+
+## Installation
+
+1. Download the latest zip from [GitHub Releases](https://github.com/kenshin579/snapscreen/releases).
+2. Unzip it and move `SnapScreen.app` into your `Applications` folder.
+3. This app is an unsigned distribution, so before running it for the first time you must remove the quarantine attribute from the Terminal:
 
    ```bash
    xattr -cr /Applications/SnapScreen.app
    ```
 
-4. 이후 `SnapScreen.app`을 실행합니다. 실행하면 캡처 버튼이 있는 홈 창이 열리고, 창을 닫으면 메뉴바에 상주합니다.
+4. Then launch `SnapScreen.app`. On launch, a Home window with capture buttons opens; when you close it, the app stays in the menu bar.
 
-### 화면 기록 권한
+### Screen Recording Permission
 
-최초 캡처 시도 시 화면 기록 권한이 필요합니다.
+Screen Recording permission is required the first time you attempt a capture.
 
-1. **시스템 설정 > 개인정보 보호 및 보안 > 화면 및 시스템 오디오 녹음**으로 이동합니다.
-2. 목록에서 **SnapScreen**을 켭니다.
-3. SnapScreen 앱을 재시작합니다.
+1. Go to **System Settings > Privacy & Security > Screen & System Audio Recording**.
+2. Turn on **SnapScreen** in the list.
+3. Restart the SnapScreen app.
 
-## 소스에서 빌드
+## Build from Source
 
-요구 사항: Xcode Command Line Tools
+Requirements: Xcode Command Line Tools
 
 ```bash
 Scripts/run.sh
 ```
 
-테스트 실행:
+Run tests:
 
 ```bash
 swift test
 ```
 
-## 기본 단축키
+## Default Shortcuts
 
-| 동작 | 단축키 |
+| Action | Shortcut |
 | --- | --- |
-| 영역 캡처 | `⌘⇧1` |
-| 창 캡처 | `⌘⇧2` |
-| 전체 화면 캡처 | `⌘⇧0` |
-| 화살표 도구 | `A` |
-| 사각형 도구 | `R` |
-| 원 도구 | `O` |
-| 텍스트 도구 | `T` |
-| 블러 도구 | `G` |
-| 모자이크 도구 | `B` |
-| 번호 배지 도구 | `N` |
-| 펜 도구 | `P` |
-| 지우개 | `X` |
-| 자르기 | `C` |
-| 텍스트 추출 | `E` |
-| 실행 취소 | `⌘Z` |
-| 다시 실행 | `⇧⌘Z` |
-| 클립보드로 복사 | `⌘C` |
-| 파일로 저장 | `⌘S` |
+| Region capture | `⌘⇧1` |
+| Window capture | `⌘⇧2` |
+| Full-screen capture | `⌘⇧0` |
+| Arrow tool | `A` |
+| Rectangle tool | `R` |
+| Ellipse tool | `O` |
+| Text tool | `T` |
+| Blur tool | `G` |
+| Mosaic tool | `B` |
+| Number badge tool | `N` |
+| Pen tool | `P` |
+| Eraser | `X` |
+| Crop | `C` |
+| Extract text | `E` |
+| Undo | `⌘Z` |
+| Redo | `⇧⌘Z` |
+| Copy to clipboard | `⌘C` |
+| Save to file | `⌘S` |
 
-캡처 단축키는 설정 창에서 변경할 수 있습니다.
+Capture shortcuts can be changed in the Settings window.
 
-## 라이선스
+## License
 
 [MIT](LICENSE)
